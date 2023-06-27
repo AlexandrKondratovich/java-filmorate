@@ -9,16 +9,12 @@ import ru.yandex.practicum.filmorate.service.ValidateService;
 import ru.yandex.practicum.filmorate.model.UserComparator;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @Slf4j
 public class UserController {
-    private HashMap<String, User> users = new HashMap<>();
-    private HashMap<Integer, String> emails = new HashMap<>();
+    private HashMap<Integer, User> users = new HashMap<>();
     private int idCounter = 1;
     private ValidateService service = new ValidateService();
 
@@ -35,28 +31,31 @@ public class UserController {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if (users.containsKey(user.getEmail())) {
-            log.info("UserAlreadyExistException: \"Пользователь с таким e-mail уже есть в базе.\"");
-            throw new UserAlreadyExistException("Пользователь с таким e-mail уже есть в базе.");
+        for (User existingUser: users.values()) {
+            if (existingUser.getEmail().equals(user.getEmail())) {
+                log.warn("UserAlreadyExistException: \"Пользователь с таким e-mail уже есть в базе.\"");
+                throw new UserAlreadyExistException("Пользователь с таким e-mail уже есть в базе.");
+            }
         }
         user.setId(idCounter++);
-        emails.put(user.getId(),user.getEmail());
-        users.put(user.getEmail(), user);
-        log.debug("Пользователь: {}", user);
+        users.put(user.getId(), user);
+        log.info("Пользователь: {}", user);
         return user;
     }
 
     @PutMapping(value = "/users")
     public User update(@RequestBody @Valid User user) {
         service.validateUser(user);
-        if (!emails.containsKey(user.getId())) {
-            log.info("UserNotFoundException: \"Пользователя с таким ID нет в базе.\"");
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        if (!users.containsKey(user.getId())) {
+            log.warn("UserNotFoundException: \"Пользователя с таким ID нет в базе.\"");
             throw new UserNotFoundException("Пользователя с таким ID нет в базе.");
         }
-        users.remove(emails.get(user.getId()));
-        users.put(user.getEmail(), user);
-        emails.put(user.getId(), user.getEmail());
-        log.debug("Пользователь: {}", user);
+        users.remove(user.getId());
+        users.put(user.getId(), user);
+        log.info("Пользователь: {}", user);
         return user;
     }
 

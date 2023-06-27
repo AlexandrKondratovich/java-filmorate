@@ -32,12 +32,12 @@ public class FilmController {
     public Film add(@RequestBody @Valid Film film) {
         service.validateFilm(film);
         if (film.getId() != null && films.containsKey(film.getId())) {
-            log.info("FilmAlreadyExistException: \"Фильм с таким ID уже есть в базе.\"");
+            log.warn("FilmAlreadyExistException: \"Фильм с таким ID уже есть в базе.\"");
             throw new FilmAlreadyExistException("Фильм с таким ID уже есть в базе.");
         }
         film.setId(idCounter++);
         films.put(film.getId(), film);
-        log.debug("Фильм: {}", film);
+        log.info("Фильм: {}", film);
         return film;
     }
 
@@ -45,11 +45,11 @@ public class FilmController {
     public Film update(@RequestBody @Valid Film film) {
         service.validateFilm(film);
         if (!films.containsKey(film.getId())) {
-            log.info("FilmNotFoundException: \"Фильма с таким ID нет в базе.\"");
+            log.warn("FilmNotFoundException: \"Фильма с таким ID нет в базе.\"");
             throw new FilmNotFoundException("Фильма с таким ID нет в базе.");
         }
         films.put(film.getId(), film);
-        log.debug("Фильм: {}", film);
+        log.info("Фильм: {}", film);
         return film;
     }
 }
