@@ -42,7 +42,7 @@ public class UserService {
     }
 
     public List<User> getFriendsListById(int userId) {
-        return new ArrayList<>(userStorage.getFriendsByUserId(userId));
+        return userStorage.getFriendsByUserId(userId);
     }
 
     public List<User> getCommonFriendsList(int firstUserId, int secondUserId) {

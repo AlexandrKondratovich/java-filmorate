@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -11,12 +10,11 @@ import java.util.*;
 public class InMemoryUserStorage implements UserStorage {
 
     int idCounter = 1;
-    final HashMap<Integer, User> usersMap = new HashMap<>();
-    HashMap<Integer, Set<User>> usersFriends = new HashMap<>();
+    final Map<Integer, User> usersMap = new HashMap<>();
 
     @Override
     public User get(int userId) {
-        if (!usersMap.containsKey(userId) || usersMap.get(userId) == null) {
+        if (!usersMap.containsKey(userId)) {
             throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден.");
         }
         return usersMap.get(userId);
@@ -29,9 +27,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User add(User user) {
-        if (user.getId() != null && usersMap.containsKey(user.getId())) {
-            throw new UserAlreadyExistException("Пользователь с ID=" + user.getId() + " уже есть в базе.");
-        }
         user.setId(idCounter++);
         usersMap.put(user.getId(), user);
         return user;
@@ -44,45 +39,34 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        if (!usersMap.containsKey(user.getId())) {
-            throw new UserNotFoundException("Пользователь с ID=" + user.getId() + " не найден.");
-        }
+        get(user.getId());
         usersMap.put(user.getId(), user);
         return user;
     }
 
     @Override
     public void addFriend(int userId, int friendId) {
-        if (!usersMap.containsKey(userId) || !usersMap.containsKey(friendId)) {
-            throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден.");
-        }
-        Set<User> uFriendIds = usersFriends.computeIfAbsent(userId, id -> new HashSet<>());
-        uFriendIds.add(usersMap.get(friendId));
-
-        Set<User> fFriendIds = usersFriends.computeIfAbsent(friendId, id -> new HashSet<>());
-        fFriendIds.add(usersMap.get(userId));
+        get(userId);
+        get(friendId);
+        usersMap.get(userId).getFriends().add(friendId);
+        usersMap.get(friendId).getFriends().add(userId);
     }
 
     @Override
     public void deleteFriend(int userId, int friendId) {
-        if (!usersMap.containsKey(userId) || !usersMap.containsKey(friendId)) {
-            throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден.");
-        }
-        Set<User> uFriendIds = usersFriends.computeIfAbsent(userId, id -> new HashSet<>());
-        uFriendIds.remove(usersMap.get(friendId));
-
-        Set<User> fFriendIds = usersFriends.computeIfAbsent(friendId, id -> new HashSet<>());
-        fFriendIds.remove(usersMap.get(userId));
+        get(userId);
+        get(friendId);
+        usersMap.get(userId).getFriends().remove(friendId);
+        usersMap.get(friendId).getFriends().remove(userId);
     }
 
     @Override
     public List<User> getFriendsByUserId(int userId) {
-        if (usersFriends.isEmpty()) {
-            return new ArrayList<>();
+        get(userId);
+        List<User> friendsList = new ArrayList<>();
+        for(Integer id : usersMap.get(userId).getFriends()){
+            friendsList.add(usersMap.get(id));
         }
-        if (!usersMap.containsKey(userId)) {
-            throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден.");
-        }
-        return new ArrayList<>(usersFriends.get(userId));
+        return friendsList;
     }
 }

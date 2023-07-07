@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.TopFilmComparator;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -39,9 +38,7 @@ public class FilmService {
     }
 
     public void addLike(int filmId, int userId) {
-        if (userStorage.get(userId) == null) {
-            throw new UserNotFoundException();
-        }
+        userStorage.get(userId);
         filmStorage.addLike(filmId, userId);
     }
 
