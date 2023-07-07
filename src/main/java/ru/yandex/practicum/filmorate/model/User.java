@@ -17,7 +17,7 @@ public class User {
     @Email(message = "Некорректный email.")
     String email;
     @NotNull
-    @NotBlank (message = "Логин не должен быть пустым.")
+    @NotBlank(message = "Логин не должен быть пустым.")
     String login;
     String name;
     @BirthdayConstraint

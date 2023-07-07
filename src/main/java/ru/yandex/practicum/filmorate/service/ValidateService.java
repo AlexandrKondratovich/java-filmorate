@@ -5,10 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import javax.validation.*;
 import java.util.Set;
 
 @Component
@@ -30,15 +27,15 @@ public class ValidateService {
         ConstraintViolation<User> violation = violations.iterator().next();
         if (violation.getPropertyPath().toString().equals("email")) {
             log.warn("Некорректный email: {}", user);
-            throw new RuntimeException("Некорректный email: " + violation.getMessage());
+            throw new ValidationException("Некорректный email: " + violation.getMessage());
         }
         if (violation.getPropertyPath().toString().equals("login")) {
             log.warn("Некорректный логин: {}", user);
-            throw new RuntimeException("Некорректный логин: " + violation.getMessage());
+            throw new ValidationException("Некорректный логин: " + violation.getMessage());
         }
         if (violation.getPropertyPath().toString().equals("birthday")) {
             log.warn("Некорректная дата рождения: {}", user);
-            throw new RuntimeException("Некорректная дата рождения: " + violation.getMessage());
+            throw new ValidationException("Некорректная дата рождения: " + violation.getMessage());
         }
     }
 
@@ -50,19 +47,19 @@ public class ValidateService {
         ConstraintViolation<Film> violation = violations.iterator().next();
         if (violation.getPropertyPath().toString().equals("name")) {
             log.warn("Некорректное название: {}", film);
-            throw new RuntimeException("Некорректное название: " + violation.getMessage());
+            throw new ValidationException("Некорректное название: " + violation.getMessage());
         }
         if (violation.getPropertyPath().toString().equals("size")) {
             log.warn("Некорректное описание: {}", film);
-            throw new RuntimeException("Некорректное описание: " + violation.getMessage());
+            throw new ValidationException("Некорректное описание: " + violation.getMessage());
         }
         if (violation.getPropertyPath().toString().equals("releaseDate")) {
             log.warn("Некорректная дата релиза: {}", film);
-            throw new RuntimeException("Некорректная дата релиза: " + violation.getMessage());
+            throw new ValidationException("Некорректная дата релиза: " + violation.getMessage());
         }
         if (violation.getPropertyPath().toString().equals("duration")) {
             log.warn("Некорректная длительность: {}", film);
-            throw new RuntimeException("Некорректная длительность: " + violation.getMessage());
+            throw new ValidationException("Некорректная длительность: " + violation.getMessage());
         }
     }
 

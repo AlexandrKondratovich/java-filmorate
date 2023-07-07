@@ -1,63 +1,73 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.ValidateService;
 import ru.yandex.practicum.filmorate.model.UserComparator;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.ValidateService;
 
 import javax.validation.Valid;
 import java.util.*;
 
 @RestController
+@RequestMapping("/users")
+@Validated
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
-    private HashMap<Integer, User> users = new HashMap<>();
-    private int idCounter = 1;
-    private ValidateService service = new ValidateService();
+    final ValidateService validateService;
+    final UserService userService;
+    UserComparator comparator = new UserComparator();
 
-    @GetMapping("/users")
+    @GetMapping
     public List<User> getAll() {
-        ArrayList<User> list = new ArrayList<>(users.values());
-        Collections.sort(list, new UserComparator());
+        return userService.getAll();
+    }
+
+    @GetMapping("/{userId}")
+    public User get(@PathVariable Integer userId) {
+        return userService.get(userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void delete(@PathVariable Integer userId) {
+        userService.delete(userId);
+    }
+
+    @PostMapping()
+    public User add(@RequestBody @Valid User user) {
+        validateService.validateUser(user);
+        return userService.add(user);
+    }
+
+    @PutMapping()
+    public User update(@RequestBody @Valid User user) {
+        validateService.validateUser(user);
+        return userService.update(user);
+    }
+
+    @PutMapping("/{userId}/friends/{friendId}")
+    public void addFriend(@PathVariable int userId, @PathVariable int friendId) {
+        userService.addFriend(userId, friendId);
+    }
+
+    @DeleteMapping("/{userId}/friends/{friendId}")
+    public void deleteFriend(@PathVariable int userId, @PathVariable int friendId) {
+        userService.deleteFriend(userId, friendId);
+    }
+
+    @GetMapping("/{userId}/friends")
+    public List<User> getFriendsById(@PathVariable int userId) {
+        List<User> list = new ArrayList<>(userService.getFriendsListById(userId));
+        list.sort(comparator);
         return list;
     }
 
-    @PostMapping(value = "/users")
-    public User add(@RequestBody @Valid User user) {
-        service.validateUser(user);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        for (User existingUser: users.values()) {
-            if (existingUser.getEmail().equals(user.getEmail())) {
-                log.warn("UserAlreadyExistException: \"Пользователь с таким e-mail уже есть в базе.\"");
-                throw new UserAlreadyExistException("Пользователь с таким e-mail уже есть в базе.");
-            }
-        }
-        user.setId(idCounter++);
-        users.put(user.getId(), user);
-        log.info("Пользователь: {}", user);
-        return user;
+    @GetMapping("/{firstId}/friends/common/{secondId}")
+    public List<User> getCommonFriendsList(@PathVariable int firstId, @PathVariable int secondId) {
+        return userService.getCommonFriendsList(firstId, secondId);
     }
-
-    @PutMapping(value = "/users")
-    public User update(@RequestBody @Valid User user) {
-        service.validateUser(user);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if (!users.containsKey(user.getId())) {
-            log.warn("UserNotFoundException: \"Пользователя с таким ID нет в базе.\"");
-            throw new UserNotFoundException("Пользователя с таким ID нет в базе.");
-        }
-        users.remove(user.getId());
-        users.put(user.getId(), user);
-        log.info("Пользователь: {}", user);
-        return user;
-    }
-
-
 }
