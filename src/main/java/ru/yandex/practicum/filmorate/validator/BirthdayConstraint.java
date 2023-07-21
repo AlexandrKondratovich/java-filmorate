@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @Target({ ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BirthdayConstraint {
-    String message() default "Дата рождения не должна быть позже сегодняшнего числа.";
+    String message() default "День рождения не позже сегодняшнего числаю";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

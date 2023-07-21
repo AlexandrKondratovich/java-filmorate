@@ -1,13 +1,11 @@
-package ru.yandex.practicum.filmorate;
+package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.validator.ReleaseDateConstraint;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
@@ -19,12 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FilmTest {
 
-    private static Validator validator;
+    private final Validator validator = Validation.buildDefaultValidatorFactory()
+            .usingContext()
+            .getValidator();
 
-    static {
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.usingContext().getValidator();
-    }
 
     @Test
     void shouldCreateCorrectFilm() {

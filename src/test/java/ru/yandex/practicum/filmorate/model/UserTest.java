@@ -1,7 +1,8 @@
-package ru.yandex.practicum.filmorate;
+package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.model.User;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.validator.BirthdayConstraint;
 
 import javax.validation.*;
@@ -12,14 +13,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@JdbcTest
+@Import(User.class)
 public class UserTest {
 
-    private static Validator validator;
-
-    static {
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.usingContext().getValidator();
-    }
+     static final Validator validator = Validation.buildDefaultValidatorFactory()
+                                                  .usingContext()
+                                                  .getValidator();
 
     @Test
     void shouldCreateCorrectUser() {
@@ -47,7 +47,9 @@ public class UserTest {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty(), "Нарушения отсутствуют.");
         ConstraintViolation<User> violation = violations.iterator().next();
-        assertEquals(NotBlank.class, violation.getConstraintDescriptor().getAnnotation().annotationType(),
+        assertEquals(NotBlank.class, violation.getConstraintDescriptor()
+                                              .getAnnotation()
+                                              .annotationType(),
                 "Нарушение \"NotBlank\" не найдено.");
         assertEquals("login", violation.getPropertyPath().toString(),
                 "Не найдено нарушение для поля \"login\".");
@@ -62,7 +64,9 @@ public class UserTest {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty(), "Нарушения отсутствуют.");
         ConstraintViolation<User> violation = violations.iterator().next();
-        assertEquals(Email.class, violation.getConstraintDescriptor().getAnnotation().annotationType(),
+        assertEquals(Email.class, violation.getConstraintDescriptor()
+                                           .getAnnotation()
+                                           .annotationType(),
                 "Нарушение \"Email\" не найдено.");
         assertEquals("email", violation.getPropertyPath().toString(),
                 "Не найдено нарушение для поля \"email\".");
@@ -79,7 +83,7 @@ public class UserTest {
         assertFalse(violations.isEmpty(), "Нарушения отсутствуют.");
         ConstraintViolation<User> violation = violations.iterator().next();
         assertEquals(BirthdayConstraint.class, violation.getConstraintDescriptor().getAnnotation().annotationType(),
-                "Нарушение \"ReleaseDateConstraint\" не найдено.");
+                "Нарушение \"BirthdayConstraint\" не найдено.");
         assertEquals("birthday", violation.getPropertyPath().toString(),
                 "Не найдено нарушение для поля \"birthday\".");
     }

@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserComparator;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.service.ValidateService;
 
 import javax.validation.Valid;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -59,11 +61,15 @@ public class UserController {
 
     @GetMapping("/{userId}/friends")
     public List<User> getFriendsById(@PathVariable int userId) {
-        return userService.getFriendsListById(userId);
+        return userService.getFriendsListById(userId).stream()
+                .sorted(new UserComparator())
+                .collect(Collectors.toList()); //Для POSTMAN-проверки
     }
 
     @GetMapping("/{firstId}/friends/common/{secondId}")
     public List<User> getCommonFriendsList(@PathVariable int firstId, @PathVariable int secondId) {
-        return userService.getCommonFriendsList(firstId, secondId);
+        return userService.getCommonFriendsList(firstId, secondId).stream()
+                .sorted(new UserComparator())
+                .collect(Collectors.toList()); //Для POSTMAN-проверки
     }
 }

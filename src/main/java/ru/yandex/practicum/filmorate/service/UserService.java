@@ -1,9 +1,10 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.dao.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,50 +12,44 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    final UserStorage userStorage;
 
-    public User get(int userId) {
-        return userStorage.get(userId);
+    @Qualifier("userDbRepository")
+    final UserRepository userRepository;
+
+    public User get(long userId) {
+        return userRepository.getById(userId);
     }
 
     public List<User> getAll() {
-        return userStorage.getUsersList();
+        return new ArrayList<>(userRepository.getUsersList());
     }
 
     public User add(User user) {
-        return userStorage.add(checkUserName(user));
+        return userRepository.add(checkUserName(user));
     }
 
     public User update(User user) {
-        return userStorage.update(checkUserName(user));
+        return userRepository.update(checkUserName(user));
     }
 
-    public void delete(int userId) {
-        userStorage.delete(userId);
+    public void delete(long userId) {
+        userRepository.delete(userId);
     }
 
-    public void addFriend(int userId, int friendId) {
-        userStorage.addFriend(userId, friendId);
+    public void addFriend(long userId, long friendId) {
+        userRepository.addFriend(userId, friendId);
     }
 
-    public void deleteFriend(int userId, int friendId) {
-        userStorage.deleteFriend(userId, friendId);
+    public void deleteFriend(long userId, long friendId) {
+        userRepository.deleteFriend(userId, friendId);
     }
 
-    public List<User> getFriendsListById(int userId) {
-        return userStorage.getFriendsByUserId(userId);
+    public List<User> getFriendsListById(long userId) {
+        return new ArrayList<>(userRepository.getFriendsByUserId(userId));
     }
 
-    public List<User> getCommonFriendsList(int firstUserId, int secondUserId) {
-        List<User> commonFriends = new ArrayList<>();
-        if (userStorage.getFriendsByUserId(firstUserId).size() != 0) {
-            for (User friend : userStorage.getFriendsByUserId(firstUserId)) {
-                if (userStorage.getFriendsByUserId(secondUserId).contains(friend)) {
-                    commonFriends.add(friend);
-                }
-            }
-        }
-        return commonFriends;
+    public List<User> getCommonFriendsList(long firstUserId, long secondUserId) {
+        return userRepository.getCommonFriends(firstUserId, secondUserId);
     }
 
     private User checkUserName(User user) {

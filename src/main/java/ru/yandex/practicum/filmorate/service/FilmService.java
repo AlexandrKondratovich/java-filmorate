@@ -1,55 +1,63 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.TopFilmComparator;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.dao.FilmRepository;
+import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    final FilmStorage filmStorage;
-    final UserStorage userStorage;
+    @Qualifier("filmDbRepository")
+    final FilmRepository filmRepository;
 
-    public Film get(int filmId) {
-        return filmStorage.get(filmId);
+    public Film get(long filmId) {
+        return filmRepository.getById(filmId);
     }
 
     public List<Film> getAll() {
-        return filmStorage.getFilmsList();
+        return new ArrayList<>(filmRepository.getFilmsList());
     }
 
     public Film add(Film film) {
-        filmStorage.add(film);
-        return film;
+        filmRepository.add(film);
+        return get(film.getId());
     }
 
     public Film update(Film film) {
-        filmStorage.update(film);
-        return film;
+        filmRepository.update(film);
+        return get(film.getId());
     }
 
-    public void delete(int filmId) {
-        filmStorage.delete(filmId);
+    public void delete(long filmId) {
+        filmRepository.delete(filmId);
     }
 
-    public void addLike(int filmId, int userId) {
-        userStorage.get(userId);
-        filmStorage.addLike(filmId, userId);
+    public void addLike(long filmId, long userId) {
+        filmRepository.addLike(filmId, userId);
     }
 
-    public void deleteLike(int filmId, int userId) {
-        userStorage.get(userId);
-        filmStorage.deleteLike(filmId, userId);
+    public void deleteLike(long filmId, long userId) {
+        filmRepository.deleteLike(filmId, userId);
+    }
+
+    public List<User> getFIlmLikes(long filmId) {
+        return filmRepository.getFilmLikes(filmId);
+    }
+
+    public List<Genre> getFilmGenres(long filmId) {
+        return filmRepository.getFilmGenres(filmId);
     }
 
     public List<Film> getTopFilms(Integer count) {
         TopFilmComparator comparator = new TopFilmComparator();
-        List<Film> films = filmStorage.getFilmsList();
+        List<Film> films = new ArrayList<>(filmRepository.getFilmsList());
         films.sort(comparator);
         if (count == null) {
             if (films.size() > 10) {

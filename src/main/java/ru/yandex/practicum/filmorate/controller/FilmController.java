@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.ValidateService;
 
@@ -27,12 +29,12 @@ public class FilmController {
     }
 
     @GetMapping("/{filmId}")
-    public Film get(@PathVariable Integer filmId) {
+    public Film get(@PathVariable Long filmId) {
         return filmService.get(filmId);
     }
 
     @DeleteMapping("/{filmId}")
-    public void delete(@PathVariable Integer filmId) {
+    public void delete(@PathVariable Long filmId) {
         filmService.delete(filmId);
     }
 
@@ -51,15 +53,25 @@ public class FilmController {
     }
 
     @PutMapping("/{filmId}/like/{userId}")
-    public Film addLike(@PathVariable int filmId, @PathVariable int userId) {
+    public Film addLike(@PathVariable long filmId, @PathVariable long userId) {
         filmService.addLike(filmId, userId);
         return filmService.get(filmId);
     }
 
     @DeleteMapping("/{filmId}/like/{userId}")
-    public Film deleteLike(@PathVariable int filmId, @PathVariable int userId) {
+    public Film deleteLike(@PathVariable long filmId, @PathVariable long userId) {
         filmService.deleteLike(filmId, userId);
         return filmService.get(filmId);
+    }
+
+    @GetMapping("/{filmId}/likes")
+    public List<User> getFIlmLikes(@PathVariable long filmId) {
+        return filmService.getFIlmLikes(filmId);
+    }
+
+    @GetMapping("/{filmId}/genres")
+    public List<Genre> getFilmGenres(@PathVariable long filmId) {
+        return filmService.getFilmGenres(filmId);
     }
 
     @GetMapping("/popular")
