@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
@@ -43,14 +42,12 @@ public class FilmController {
     @ResponseStatus(HttpStatus.CREATED)
     public Film add(@RequestBody @Valid Film film) {
         validateService.validateFilm(film);
-        film.getDirectors().forEach(director -> validateService.validDirectorId(director.getId()));
         return filmService.add(film);
     }
 
     @PutMapping
     public Film update(@RequestBody @Valid Film film) {
         validateService.validateFilm(film);
-        film.getDirectors().forEach(director -> validateService.validDirectorId(director.getId()));
         return filmService.update(film);
     }
 
@@ -82,16 +79,7 @@ public class FilmController {
     }
 
     @GetMapping("/director/{directorId}")
-    public List<Film> getDirectorFilmListByYearOrLike(@PathVariable int directorId, @RequestParam String sortBy) {
-        validateService.validDirectorId(directorId);
-        List<Film> filmList;
-        if (sortBy.equals("year")) {
-            filmList = filmService.getDirectorFilmListByYear(directorId);
-        } else if (sortBy.equals("likes")) {
-            filmList = filmService.getDirectorFilmListByLikes(directorId);
-        } else {
-            throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'like' или 'year'");
-        }
-        return filmList;
+    public List<Film> getFilmDirectorsSortedList(@PathVariable int directorId, @RequestParam String sortBy) {
+        return filmService.getFilmDirectorsSortedList(directorId, sortBy);
     }
 }
