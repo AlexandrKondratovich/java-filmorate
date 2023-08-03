@@ -119,7 +119,7 @@ public class FilmDbRepository implements FilmRepository {
         final String addSqlQuery = "insert into FILMS_GENRES (FILM_ID, GENRE_ID) " +
                 "values (:filmId, :genreId)";
         film.getGenres().forEach(genre ->
-                jdbcOperations.update(addSqlQuery, Map.of("filmId", film.getId(),"genreId", genre.getId())));
+                jdbcOperations.update(addSqlQuery, Map.of("filmId", film.getId(), "genreId", genre.getId())));
     }
 
     @Override
@@ -128,11 +128,11 @@ public class FilmDbRepository implements FilmRepository {
         final String sqlQuery = "select * " +
                 "from USERS " +
                 "where USER_ID in (" +
-                                "select USER_ID " +
-                                "from LIKES " +
-                                "where FILM_ID = :filmId) " +
+                "select USER_ID " +
+                "from LIKES " +
+                "where FILM_ID = :filmId) " +
                 "order by USER_ID";
-        return jdbcOperations.query(sqlQuery,Map.of("filmId", filmId), new UserRowMapper());
+        return jdbcOperations.query(sqlQuery, Map.of("filmId", filmId), new UserRowMapper());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class FilmDbRepository implements FilmRepository {
         if (!(jdbcOperations.queryForList(sqlQuery, Map.of("filmId", filmId), Long.class).contains(userId))) {
             sqlQuery = "insert into LIKES (FILM_ID, USER_ID) " +
                     "values (:filmId, :userId)";
-            jdbcOperations.update(sqlQuery,Map.of("filmId", filmId, "userId", userId));
+            jdbcOperations.update(sqlQuery, Map.of("filmId", filmId, "userId", userId));
         }
     }
 
@@ -162,7 +162,7 @@ public class FilmDbRepository implements FilmRepository {
         checkFilmId(filmId);
         final String sqlQuery = "delete from LIKES " +
                 "where FILM_ID = :filmId";
-        jdbcOperations.update(sqlQuery,Map.of("filmId", filmId));
+        jdbcOperations.update(sqlQuery, Map.of("filmId", filmId));
     }
 
     @Override
@@ -170,11 +170,11 @@ public class FilmDbRepository implements FilmRepository {
         final String sqlQuery = "select * " +
                 "from GENRES " +
                 "where GENRE_ID in (" +
-                                    "select GENRE_ID " +
-                                    "from FILMS_GENRES " +
-                                    "where FILM_ID = :filmId) " +
+                "select GENRE_ID " +
+                "from FILMS_GENRES " +
+                "where FILM_ID = :filmId) " +
                 "order by GENRE_ID";
-        return jdbcOperations.query(sqlQuery,Map.of("filmId", filmId), new GenreRowMapper());
+        return jdbcOperations.query(sqlQuery, Map.of("filmId", filmId), new GenreRowMapper());
     }
 
     private void addGenreToFilm(long filmId, long genreId) {
@@ -188,7 +188,6 @@ public class FilmDbRepository implements FilmRepository {
             jdbcOperations.update(sqlQuery, Map.of("filmId", filmId, "genreId", genreId));
         }
     }
-
 
 
     private void checkUserId(long userId) {
@@ -215,13 +214,13 @@ public class FilmDbRepository implements FilmRepository {
         @Override
         public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new Film(rs.getLong("FILM_ID"),
-                            rs.getString("NAME"),
-                            rs.getString("DESCRIPTION"),
-                            rs.getDate("RELEASE_DATE").toLocalDate(),
-                            rs.getLong("DURATION"),
-                            new Mpa(rs.getLong("MPA.MPA_ID"), rs.getString("MPA.NAME")),
-                            new HashSet<>(getFilmGenres(rs.getLong("FILM_ID"))),
-                            new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
+                    rs.getString("NAME"),
+                    rs.getString("DESCRIPTION"),
+                    rs.getDate("RELEASE_DATE").toLocalDate(),
+                    rs.getLong("DURATION"),
+                    new Mpa(rs.getLong("MPA.MPA_ID"), rs.getString("MPA.NAME")),
+                    new HashSet<>(getFilmGenres(rs.getLong("FILM_ID"))),
+                    new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
         }
     }
 

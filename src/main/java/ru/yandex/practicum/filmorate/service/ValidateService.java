@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.*;
@@ -62,5 +63,4 @@ public class ValidateService {
             throw new ValidationException("Некорректная длительность: " + violation.getMessage());
         }
     }
-
 }
