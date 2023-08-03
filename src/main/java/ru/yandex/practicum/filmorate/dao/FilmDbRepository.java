@@ -9,14 +9,17 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.rowMapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.dao.rowMapper.GenreRowMapper;
 import ru.yandex.practicum.filmorate.dao.rowMapper.UserRowMapper;
+import ru.yandex.practicum.filmorate.exception.DirectorNotFoundException;
 import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 
 
+import javax.validation.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class FilmDbRepository implements FilmRepository {
@@ -50,6 +53,7 @@ public class FilmDbRepository implements FilmRepository {
 
     @Override
     public Film add(Film film) {
+        checkDirectorsList(film);
         String sqlQuery = "insert into FILMS(NAME, RELEASE_DATE, DESCRIPTION, MPA_ID, DURATION) " +
                 "values (:name, :releaseDate, :description, :mpaId, :duration)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -90,6 +94,7 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public Film update(Film film) {
         checkFilmId(film.getId());
+        checkDirectorsList(film);
         String sqlQuery = "update FILMS " +
                 "set NAME = :name, " +
                 "RELEASE_DATE = :releaseDate, " +
@@ -113,10 +118,7 @@ public class FilmDbRepository implements FilmRepository {
                 .forEach(userId -> addLike(film.getId(), userId));
 
         updateGenres(film);
-        updateDirectors(film);
-        List<Director> dirList = getDirectorListByFilmId(film.getId());
-        Film film1 = getById(film.getId());
-        return film1;
+        return updateDirectors(film);
     }
 
     private void updateGenres(Film film) {
@@ -129,19 +131,40 @@ public class FilmDbRepository implements FilmRepository {
                 jdbcOperations.update(addSqlQuery, Map.of("filmId", film.getId(), "genreId", genre.getId())));
     }
 
-    private void updateDirectors(Film film) {
+    private Film updateDirectors(Film film) {
         final String deleteSqlQuery = "delete from FILM_DIRECTORS " +
                 "where FILM_ID = :filmId";
         jdbcOperations.update(deleteSqlQuery, Map.of("filmId", film.getId()));
 
         film.getDirectors()
                 .forEach(director -> addDirectorToFilm(film.getId(), director.getId()));
+        return getById(film.getId());
     }
 
     private void addDirectorToFilm(long filmId, int directorId) {
 
         String sql = "INSERT INTO FILM_DIRECTORS(FILM_ID, DIRECTOR_ID) VALUES ( :filmId, :directorId )";
         jdbcOperations.update(sql, Map.of("filmId", filmId, "directorId", directorId));
+    }
+
+    private void checkDirectorsList(Film film) {
+
+        String sql = "select * from DIRECTORS";
+
+        if (!film.getDirectors().isEmpty()) {
+            List<Integer> filmDirectorIdList = film.getDirectors().stream()
+                    .map(Director::getId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<Integer> directorsInDb = jdbcOperations.query(sql, new DirectorRowMapper()).stream()
+                    .map(Director::getId)
+                    .collect(Collectors.toList());
+            for (Integer directorId : filmDirectorIdList) {
+                if (!directorsInDb.contains(directorId)) {
+                    throw new ValidationException("Режиссер в запросе должен соответствовать с базой данных");
+                }
+            }
+        }
     }
 
     @Override
@@ -233,6 +256,7 @@ public class FilmDbRepository implements FilmRepository {
 
     @Override
     public List<Film> getDirectorFilmListByYear(int directorId) {
+        checkDirectorById(directorId);
 
         final String sqlQuery = "select * " +
                 "from FILMS as F " +
@@ -247,6 +271,7 @@ public class FilmDbRepository implements FilmRepository {
 
     @Override
     public List<Film> getDirectorFilmListByLikes(int directorId) {
+        checkDirectorById(directorId);
 
         final String sqlQuery = "select F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
                 "from FILMS as F " +
@@ -258,6 +283,15 @@ public class FilmDbRepository implements FilmRepository {
                 "order by COUNT(L.USER_ID) DESC";
 
         return jdbcOperations.query(sqlQuery, Map.of("directorId", directorId), new FilmRowMapper());
+    }
+
+    private void checkDirectorById(int id) {
+
+        String sql = "select * from DIRECTORS where DIRECTOR_ID = :id";
+        List<Director> directorList = jdbcOperations.query(sql, Map.of("id", id), new DirectorRowMapper());
+        if (directorList.isEmpty()) {
+            throw new DirectorNotFoundException("Режиссера c идентификатором " + id + " не найдено в базе ");
+        }
     }
 
     private List<Director> getDirectorListByFilmId(Long filmId) {

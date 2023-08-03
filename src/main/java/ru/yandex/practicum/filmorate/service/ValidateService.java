@@ -3,14 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.*;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -67,25 +64,5 @@ public class ValidateService {
             log.warn("Некорректная длительность: {}", film);
             throw new ValidationException("Некорректная длительность: " + violation.getMessage());
         }
-
-        if (!film.getDirectors().isEmpty()) {
-            List<Integer> filmDirectorIdList = film.getDirectors().stream()
-                    .map(Director::getId)
-                    .distinct()
-                    .collect(Collectors.toList());
-            List<Integer> directorsInDb = directorService.getAllDirectors().stream()
-                    .map(Director::getId)
-                    .collect(Collectors.toList());
-            for (Integer directorId : filmDirectorIdList) {
-                if (!directorsInDb.contains(directorId)) {
-                    log.debug("В запросе передан режиссер с неправильным id {}", directorId);
-                    throw new ValidationException("Режиссер должен соответствовать базе данных");
-                }
-            }
-        }
-    }
-
-    public void validDirectorId(int id) {
-        directorService.getDirectorById(id);
     }
 }

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import ru.yandex.practicum.filmorate.dao.DirectorStorage;
+import ru.yandex.practicum.filmorate.dao.DirectorRepository;
 import ru.yandex.practicum.filmorate.exception.DirectorNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 
@@ -15,14 +15,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DirectorService {
 
-    private final DirectorStorage directorStorage;
+    private final DirectorRepository directorRepository;
 
     public List<Director> getAllDirectors() {
-        return directorStorage.getAllDirectors();
+        return directorRepository.getAllDirectors();
     }
 
     public Director getDirectorById(int id) {
-        return directorStorage.getDirectorById(id).orElseThrow(() ->
+        return directorRepository.getDirectorById(id).orElseThrow(() ->
                 new DirectorNotFoundException("Режиссера с ID " + id + " нет в базе"));
     }
 
@@ -30,22 +30,22 @@ public class DirectorService {
         if (StringUtils.isBlank(director.getName())) {
             throw new ValidationException("Имя режиссера обзятельно для заполнения");
         }
-        return directorStorage.addDirector(director);
+        return directorRepository.addDirector(director);
     }
 
     public Director updateDirector(Director director) {
-        directorStorage.getDirectorById(director.getId()).orElseThrow(() ->
+        directorRepository.getDirectorById(director.getId()).orElseThrow(() ->
                 new DirectorNotFoundException("Режиссера с ID " + director.getId() + " нет в базе"));
         if (StringUtils.isBlank(director.getName())) {
             throw new ValidationException("Имя режиссера обзятельно для заполнения");
         }
-        return directorStorage.updateDirector(director);
+        return directorRepository.updateDirector(director);
     }
 
     public boolean deleteDirector(int id) {
-        directorStorage.getDirectorById(id).orElseThrow(() ->
+        directorRepository.getDirectorById(id).orElseThrow(() ->
                 new DirectorNotFoundException("Режиссера с ID " + id + " нет в базе"));
-        return directorStorage.deleteDirector(id);
+        return directorRepository.deleteDirector(id);
     }
 
 }

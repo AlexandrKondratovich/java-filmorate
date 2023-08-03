@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.TopFilmComparator;
@@ -71,12 +72,15 @@ public class FilmService {
         return films;
     }
 
-    public List<Film> getDirectorFilmListByYear(int directorId) {
-        return filmRepository.getDirectorFilmListByYear(directorId);
+    public List<Film> getFilmDirectorsSortedList(int directorId, String sortBy) {
+        List<Film> filmList;
+        if (sortBy.equals("year")) {
+            filmList = filmRepository.getDirectorFilmListByYear(directorId);
+        } else if (sortBy.equals("likes")) {
+            filmList = filmRepository.getDirectorFilmListByLikes(directorId);
+        } else {
+            throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'like' или 'year'");
+        }
+        return filmList;
     }
-
-    public List<Film> getDirectorFilmListByLikes(int directorId) {
-        return filmRepository.getDirectorFilmListByLikes(directorId);
-    }
-
 }
