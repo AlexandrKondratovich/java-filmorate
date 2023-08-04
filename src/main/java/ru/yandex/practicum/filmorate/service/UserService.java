@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FilmDbRepository;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 
@@ -15,6 +17,7 @@ public class UserService {
 
     @Qualifier("userDbRepository")
     final UserRepository userRepository;
+    final FilmDbRepository filmDbRepository;
 
     public User get(long userId) {
         return userRepository.getById(userId);
@@ -57,5 +60,10 @@ public class UserService {
             user.setName(user.getLogin());
         }
         return user;
+    }
+
+    public List<Film> getRecommendations(long userId) {
+        get(userId);
+        return filmDbRepository.getRecommendations(userId);
     }
 }

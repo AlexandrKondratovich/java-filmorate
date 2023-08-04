@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 
-
 import javax.validation.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -301,6 +300,35 @@ public class FilmDbRepository implements FilmRepository {
                 "where FD.FILM_ID = :filmId";
 
         return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
+    }
+
+    @Override
+    public List<Film> getRecommendations(long userId) {
+        checkUserId(userId);
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M ON F.MPA_ID = M.MPA_ID " +
+                "where F.FILM_ID IN (" +
+                    "select DISTINCT L.FILM_ID " +
+                    "from LIKES as L " +
+                    "where L.USER_ID IN (" +
+                        "select FL1.USER_ID " +
+                        "from LIKES as FL1 " +
+                        "right join LIKES as FL2 ON FL1.FILM_ID = FL2.FILM_ID " +
+                        "where FL2.USER_ID = :userId " +
+                        "and FL1.USER_ID != :userId " +
+                        "group by FL1.USER_ID " +
+                        "order by COUNT(FL1.user_id) DESC " +
+                        "limit 3" +
+                    ")" +
+                ") " +
+                "and F.FILM_ID NOT IN (" +
+                    "select FILM_ID " +
+                    "from LIKES " +
+                    "where USER_ID = :userId" +
+                ") " +
+                "order BY F.FILM_ID";
+        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
     }
 
     private class FilmRowMapper implements RowMapper<Film> {
