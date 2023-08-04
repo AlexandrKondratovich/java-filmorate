@@ -63,7 +63,6 @@ public class UserService {
     }
 
     public List<Film> getRecommendations(long userId) {
-        get(userId);
         return filmDbRepository.getRecommendations(userId);
     }
 }
