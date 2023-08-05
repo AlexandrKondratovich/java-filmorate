@@ -6,6 +6,6 @@ public class ReviewNotExistObject extends RuntimeException {
     }
 
     public ReviewNotExistObject(long id) {
-        super("Отзыв с ID=" + id + " не найден.");
+        super("Отзыв с ID=" + id + " не найден");
     }
 }
