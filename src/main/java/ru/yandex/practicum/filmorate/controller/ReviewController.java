@@ -9,28 +9,24 @@ import ru.yandex.practicum.filmorate.service.ReviewService;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
+@RequestMapping("/reviews")
 @Validated
 @Slf4j
-@RequestMapping("/reviews")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping
-    public List<Review> getAllReviews() {
-        return reviewService.getAllReviews();
-    }
-
     @PostMapping
-    public Review addReview(@RequestBody @Valid Review review) {
+    public Review addReview(@Valid @RequestBody Review review) {
         return reviewService.addReview(review);
     }
 
     @PutMapping
-    public Review updateReview(@RequestBody @Valid Review review) {
+    public Review updateReview(@Valid @RequestBody Review review) {
         return reviewService.updateReview(review);
     }
 
@@ -45,7 +41,7 @@ public class ReviewController {
     }
 
     @GetMapping
-    public List<Review> getAllReviewByFilmId(@RequestParam long filmId, @RequestParam(defaultValue = "10") int count) {
+    public List<Review> getAllReviewByFilmId(@RequestParam Optional<Long> filmId, @RequestParam Optional<Integer> count) {
         return reviewService.getAllReviewByFilmId(filmId, count);
     }
 

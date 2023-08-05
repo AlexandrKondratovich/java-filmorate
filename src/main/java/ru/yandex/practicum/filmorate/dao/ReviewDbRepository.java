@@ -17,65 +17,56 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Component
-public class ReviewDbRepository implements ReviewRepository{
+public class ReviewDbRepository implements ReviewRepository {
 
     private final NamedParameterJdbcOperations jdbcOperations;
 
     @Override
-    public List<Review> getAllReviews() {
-        String sql = "SELECT * " +
-                     "FROM REVIEWS ";
-        return jdbcOperations.query(sql, new ReviewRowMapper());
-    }
-
-    @Override
     public Review addReview(Review review) {
-        String sql = "INSERT INTO REVIEWS (CONTENT, IS_POSITIVE, USER_ID, FILM_ID) " +
-                     "VALUES (:content, :typeIsPositive, :userId, :filmId) ";
+        String sql = "INSERT INTO REVIEWS (CONTENT, ISPOSITIVE, USER_ID, FILM_ID) " +
+                "VALUES (:content, :isPositive, :userId, :filmId) ";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("content", review.getContent());
-        map.addValue("is_positive", review.isPositive());
-        map.addValue("user_id", review.getUserId());
-        map.addValue("film_id", review.getFilmId());
-        jdbcOperations.update(sql, map);
+        map.addValue("isPositive", review.getIsPositive());
+        map.addValue("userId", review.getUserId());
+        map.addValue("filmId", review.getFilmId());
+        jdbcOperations.update(sql, map, keyHolder);
         review.setReviewId(keyHolder.getKey().longValue());
         updateUseful(review);
         log.info("Отзыв " + review + " создан");
-        return review;
+        return getReviewById(review.getReviewId());
     }
 
     @Override
     public Review updateReview(Review review) {
-        String sql = "UPDATE REVIEWS SET CONTENT = :content, IS_POSITIVE = :typeIsPositive, USER_ID = :userId, FILM_ID = :filmId " +
-                "WHERE review_id = :reviewId ";
+        String sql = "UPDATE REVIEWS SET CONTENT = :content, ISPOSITIVE = :isPositive " +
+                "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("review_id", review.getReviewId());
         map.addValue("content", review.getContent());
-        map.addValue("is_positive", review.isPositive());
-        map.addValue("user_id", review.getUserId());
-        map.addValue("film_id", review.getFilmId());
+        map.addValue("isPositive", review.getIsPositive());
+        map.addValue("reviewId", review.getReviewId());
 
-        int count = jdbcOperations.update(sql, map);// нужно передавать туда айди отзыва или нет?
+        int count = jdbcOperations.update(sql, map);
         checkExistence(count, review.getReviewId());
         log.info("Отзыв " + review + " обновлен");
-        return review;
+        return getReviewById(review.getReviewId());
     }
 
     @Override
     public void deleteReviewById(long id) {
         String sql = "DELETE FROM REVIEWS " +
                 "WHERE REVIEW_ID = :reviewId ";
-        int count = jdbcOperations.update(sql, Map.of("review_id", id));
+        int count = jdbcOperations.update(sql, Map.of("reviewId", id));
         checkExistence(count, id);
     }
 
     @Override
     public Review getReviewById(long id) {
         String sql = "SELECT * " +
-                     "FROM REVIEWS " +
-                     "WHERE REVIEW_ID = :reviewId ";
-        List<Review> reviews = jdbcOperations.query(sql, Map.of("review_id", id), new ReviewRowMapper());
+                "FROM REVIEWS " +
+                "WHERE REVIEW_ID = :reviewId ";
+        List<Review> reviews = jdbcOperations.query(sql, Map.of("reviewId", id), new ReviewRowMapper());
         if (reviews.size() != 1) {
             throw new ReviewNotExistObject("Отзыв с айди " + id + " не найден");
         }
@@ -83,62 +74,82 @@ public class ReviewDbRepository implements ReviewRepository{
     }
 
     @Override
-    public List<Review> getAllReviewByFilmId(long filmId, int count) {
-        String sql = "SELECT * " +
-                     "FROM REVIEWS " +
-                     "WHERE FILM_ID = :filmId " +
-                     "ORDER BY FILM_ID ";
-        List<Review> reviews = jdbcOperations.query(sql, Map.of("film_id", filmId), new ReviewRowMapper());
-        if (reviews.size() > count) {
-            reviews = reviews.subList(0, count);
+    public List<Review> getAllReviewByFilmId(Long filmId, int count) {
+        String sql;
+        log.info("поле filmId равно" + filmId);
+        log.info("поле count равно" + count);
+        if (filmId == 0) {
+            sql = "SELECT * " +
+                    "FROM REVIEWS " +
+                    "ORDER BY USEFUL DESC ";
+        } else if (count != 10) {
+            sql = "SELECT * " +
+                    "FROM REVIEWS " +
+                    "ORDER BY USEFUL DESC " +
+                    "LIMIT :count ";
+        } else {
+            sql = "SELECT * " +
+                    "FROM REVIEWS " +
+                    "WHERE FILM_ID = :filmId " +
+                    "ORDER BY USEFUL DESC " +
+                    "LIMIT :count ";
         }
+        MapSqlParameterSource map = new MapSqlParameterSource();
+        map.addValue("filmId", filmId);
+        map.addValue("count", count);
+        List<Review> reviews = jdbcOperations.query(sql, map, new ReviewRowMapper());
+        log.info("Количнсвто отзывов в списке " + reviews.size());
         return reviews;
     }
 
     @Override
     public void addLike(long reviewId, long userId) {
         String sql = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
-                "WHERE USER_ID = :userId AND REVIEW_ID = :reviewId ";
+                "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("review_id", reviewId);
-        map.addValue("user_id", userId);
+        map.addValue("reviewId", reviewId);
         jdbcOperations.update(sql, map);
     }
 
     @Override
     public void addDislike(long reviewId, long userId) {
         String sql = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
-                "WHERE USER_ID = :userId AND REVIEW_ID = :reviewId ";
+                "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("review_id", reviewId);
-        map.addValue("user_id", userId);
+        map.addValue("reviewId", reviewId);
         jdbcOperations.update(sql, map);
     }
 
     @Override
     public void deleteLike(long reviewId, long userId) {
+        if (getReviewById(reviewId).getUseful() == 0) {
+            log.info("У отзыва рейтинг равен 0");
+            return;
+        }
         String sql = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
-                "WHERE USER_ID = :userId AND REVIEW_ID = :reviewId ";
+                "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("review_id", reviewId);
-        map.addValue("user_id", userId);
+        map.addValue("reviewId", reviewId);
         jdbcOperations.update(sql, map);
     }
 
     @Override
     public void deleteDislike(long reviewId, long userId) {
         String sql = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
-                "WHERE USER_ID = :userId AND REVIEW_ID = :reviewId ";
+                "WHERE REVIEW_ID = :reviewId ";
+        if (getReviewById(reviewId).getUseful() == 0) {
+            log.info("У отзыва рейтинг равен 0");
+            return;
+        }
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("review_id", reviewId);
-        map.addValue("user_id", userId);
+        map.addValue("reviewId", reviewId);
         jdbcOperations.update(sql, map);
     }
 
     public void updateUseful(Review review) {
         int useful = review.getUseful();
-        if (review.isPositive()) {
-            review.setUseful(useful++);
+        if (review.getIsPositive()) {
+            review.setUseful(++useful);
             log.info("Количество лайков отзыва " + review + " увеличено");
         }
     }
@@ -148,4 +159,5 @@ public class ReviewDbRepository implements ReviewRepository{
             throw new ReviewNotExistObject("Отзыв с айди " + id + " не найден");
         }
     }
+
 }

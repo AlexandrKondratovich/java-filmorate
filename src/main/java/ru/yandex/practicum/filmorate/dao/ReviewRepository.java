@@ -6,8 +6,6 @@ import java.util.List;
 
 interface ReviewRepository {
 
-    List<Review> getAllReviews();
-
     Review addReview(Review review);
 
     Review updateReview(Review review);
@@ -16,7 +14,7 @@ interface ReviewRepository {
 
     Review getReviewById(long id);
 
-    List<Review> getAllReviewByFilmId(long filmId, int count);
+    List<Review> getAllReviewByFilmId(Long filmId, int count);
 
     void addLike(long reviewId, long userId);
 
