@@ -29,4 +29,10 @@ public interface FilmRepository {
     List<Film> getDirectorFilmListByYear(int directorId);
 
     List<Film> getDirectorFilmListByLikes(int directorId);
+
+    List<Film> searchFilmsByDirAndName(String query);
+
+    List<Film> searchFilmsByName(String query);
+
+    List<Film> searchFilmsByDir(String query);
 }
