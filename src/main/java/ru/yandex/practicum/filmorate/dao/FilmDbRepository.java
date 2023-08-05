@@ -303,6 +303,58 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
     }
 
+    @Override
+    public List<Film> searchFilmsByDirAndName(String query) {
+        String regex = "%" + query + "%";
+        String sql = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
+                "from FILMS as F " +
+                "join MPA as M ON F.MPA_ID=M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "where UPPER(F.NAME) like UPPER(:regex) OR F.FILM_ID IN (" +
+                "SELECT FD.FILM_ID " +
+                "FROM FILM_DIRECTORS FD " +
+                "LEFT JOIN DIRECTORS D on D.DIRECTOR_ID = FD.DIRECTOR_ID " +
+                "WHERE UPPER(D.NAME) LIKE UPPER(:regex)" +
+                ") " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC";
+
+        return jdbcOperations.query(sql, Map.of("regex", regex), new FilmRowMapper());
+    }
+
+    @Override
+    public List<Film> searchFilmsByName(String query) {
+        String regex = "%" + query + "%";
+        String sql = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
+                "FROM FILMS AS F " +
+                "JOIN MPA AS M ON F.MPA_ID = M.MPA_ID " +
+                "LEFT JOIN LIKES AS L ON F.FILM_ID = L.FILM_ID " +
+                "WHERE UPPER(F.NAME) LIKE UPPER(:regex) " +
+                "GROUP BY F.FILM_ID " +
+                "ORDER BY COUNT(L.USER_ID) DESC";
+
+        return jdbcOperations.query(sql, Map.of("regex", regex), new FilmRowMapper());
+    }
+
+    @Override
+    public List<Film> searchFilmsByDir(String query) {
+        String regex = "%" + query + "%";
+        String sql = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
+                "FROM FILMS AS F " +
+                "join MPA as M ON F.MPA_ID=M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "where F.FILM_ID IN (" +
+                "SELECT FD.FILM_ID " +
+                "FROM FILM_DIRECTORS FD " +
+                "LEFT JOIN DIRECTORS D on D.DIRECTOR_ID = FD.DIRECTOR_ID " +
+                "WHERE UPPER(D.NAME) LIKE UPPER(:regex)" +
+                ") " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC";
+
+        return jdbcOperations.query(sql, Map.of("regex", regex), new FilmRowMapper());
+    }
+
     private class FilmRowMapper implements RowMapper<Film> {
         @Override
         public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
