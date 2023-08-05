@@ -83,4 +83,24 @@ public class FilmService {
         }
         return filmList;
     }
+
+    public List<Film> searchFilm(String query, List<String> by) {
+        if (by.size() == 2) {
+            if ((by.get(0).equals("title") && by.get(1).equals("director")) || (by.get(0).equals("director") && (by.get(1).equals("title")))) {
+                return filmRepository.searchFilmsByDirAndName(query);
+            } else {
+                throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
+            }
+        } else if (by.size() == 1) {
+            if (by.get(0).equals("title")) {
+                return filmRepository.searchFilmsByName(query);
+            } else if (by.get(0).equals("director")) {
+                return filmRepository.searchFilmsByDir(query);
+            } else {
+                throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
+            }
+        } else {
+            throw new IncorrectParameterException("В запрос передан неправильный параметр, нужна строка для поиска и нужен параметр 'director' и/или 'title'");
+        }
+    }
 }
