@@ -85,22 +85,18 @@ public class FilmService {
     }
 
     public List<Film> searchFilm(String query, List<String> by) {
-        if (by.size() == 2) {
-            if ((by.get(0).equals("title") && by.get(1).equals("director")) || (by.get(0).equals("director") && (by.get(1).equals("title")))) {
-                return filmRepository.searchFilmsByDirAndName(query);
-            } else {
-                throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
-            }
-        } else if (by.size() == 1) {
-            if (by.get(0).equals("title")) {
-                return filmRepository.searchFilmsByName(query);
-            } else if (by.get(0).equals("director")) {
-                return filmRepository.searchFilmsByDir(query);
-            } else {
-                throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
-            }
-        } else {
-            throw new IncorrectParameterException("В запрос передан неправильный параметр, нужна строка для поиска и нужен параметр 'director' и/или 'title'");
+        if (by.isEmpty() || by.size() > 2) {
+            throw new IncorrectParameterException("В запрос азпрос должено быть передано не менее 1 и не более 2 пораметров для выборки('director' и/или 'title')");
         }
+        if (by.size() == 1 && by.contains("title")) {
+            return filmRepository.searchFilmsByName(query);
+        }
+        if (by.size() == 1 && by.contains("director")) {
+            return filmRepository.searchFilmsByDir(query);
+        }
+        if (by.contains("title") && by.contains("director")) {
+            return filmRepository.searchFilmsByDirAndName(query);
+        }
+        throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
     }
 }
