@@ -25,4 +25,8 @@ public interface FilmRepository {
     List<User> getFilmLikes(long filmId);
 
     List<Genre> getFilmGenres(long filmId);
+
+    List<Film> getDirectorFilmListByYear(int directorId);
+
+    List<Film> getDirectorFilmListByLikes(int directorId);
 }

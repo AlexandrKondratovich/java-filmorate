@@ -57,10 +57,17 @@ public class ErrorHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({ValidationException.class, IncorrectParameterException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(final ValidationException e) {
+    public ErrorResponse handleValidationException(RuntimeException e) {
         log.info("Validation: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleDirectorNotFoundException(final DirectorNotFoundException e) {
+        log.info("Director not found: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 

@@ -12,6 +12,14 @@ CREATE TABLE IF NOT EXISTS MPA (
 );
 ALTER TABLE MPA ALTER COLUMN mpa_id RESTART WITH 6;
 
+create table if not exists DIRECTORS
+(
+    DIRECTOR_ID INTEGER auto_increment,
+    NAME        CHARACTER VARYING not null,
+    constraint "DIRECTORS_pk"
+        primary key (DIRECTOR_ID)
+);
+
 CREATE TABLE IF NOT EXISTS FILMS (
                         film_id INT PRIMARY KEY AUTO_INCREMENT,
                         name VARCHAR(120) DEFAULT '<no name>',
@@ -53,6 +61,16 @@ CREATE TABLE IF NOT EXISTS FILMS_GENRES (
                                       CONSTRAINT fk_id_genre
                                           FOREIGN KEY (genre_id)
                                               REFERENCES GENRES(genre_id)
+);
+
+create table if not exists FILM_DIRECTORS
+(
+    FILM_ID     INTEGER not null,
+    DIRECTOR_ID INTEGER not null,
+    constraint FILM_DIRECTORS_DIRECTORS_DIRECTOR_ID_FK
+        foreign key (DIRECTOR_ID) references DIRECTORS,
+    constraint "FILM_DIRECTORS_FILMS_FILM_ID_fk"
+        foreign key (FILM_ID) references FILMS
 );
 
 CREATE TABLE IF NOT EXISTS LIKES (

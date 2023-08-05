@@ -71,4 +71,12 @@ public class FilmService {
         return films;
     }
 
+    public List<Film> getDirectorFilmListByYear(int directorId) {
+        return filmRepository.getDirectorFilmListByYear(directorId);
+    }
+
+    public List<Film> getDirectorFilmListByLikes(int directorId) {
+        return filmRepository.getDirectorFilmListByLikes(directorId);
+    }
+
 }
