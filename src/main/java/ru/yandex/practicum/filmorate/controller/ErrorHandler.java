@@ -77,4 +77,18 @@ public class ErrorHandler {
         log.warn("Error", e);
         return new ErrorResponse(e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleReviewException(final ReviewNotExistObject e) {
+        log.info("Review not found: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleLikeAlreadyExist(final LikeAlreadyExistException e) {
+        log.info("UserId already exist: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
 }
