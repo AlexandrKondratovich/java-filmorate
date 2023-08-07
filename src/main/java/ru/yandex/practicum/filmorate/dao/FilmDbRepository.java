@@ -111,11 +111,6 @@ public class FilmDbRepository implements FilmRepository {
         map.addValue("duration", film.getDuration());
         jdbcOperations.update(sqlQuery, map);
 
-        deleteLikesByFilmId(film.getId());
-        film.getLikes().stream()
-                .map(User::getId)
-                .forEach(userId -> addLike(film.getId(), userId));
-
         updateGenres(film);
         return updateDirectors(film);
     }
@@ -169,8 +164,15 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count){
-        final String sqlQuery = "select * " +
+    public List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count) {
+        final String sqlQuery = "select F.FILM_ID, " +
+                                       "F.NAME, " +
+                                       "F.RELEASE_DATE, " +
+                                       "F.DESCRIPTION, " +
+                                       "F.DURATION, " +
+                                       "M.MPA_ID, " +
+                                       "M.NAME, " +
+                                       "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
@@ -180,35 +182,43 @@ public class FilmDbRepository implements FilmRepository {
                     "where GENRE_ID = :genreId) " +
                 "and extract(YEAR from F.RELEASE_DATE) = :year " +
                 "group by F.FILM_ID " +
-                "order by COUNT(L.USER_ID) DESC " +
+                "order by COUNT(L.USER_ID) " +
                 "limit :count";
-        List<Film> topFilms = jdbcOperations.query(sqlQuery,
+        return jdbcOperations.query(sqlQuery,
                 Map.of("genreId", genreId, "year", year, "count", count),
                 new FilmRowMapper());
-        topFilms.sort(new TopFilmComparator());
-        return topFilms;
     }
 
     @Override
-    public List<Film> getMostPopularFilmsByYear(int year, int count){
-        final String sqlQuery = "select * " +
+    public List<Film> getMostPopularFilmsByYear(int year, int count) {
+        final String sqlQuery = "select F.FILM_ID, " +
+                                       "F.NAME, " +
+                                       "F.RELEASE_DATE, " +
+                                       "F.DESCRIPTION, " +
+                                       "F.DURATION, " +
+                                       "M.MPA_ID, " +
+                                       "M.NAME, " +
+                                       "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
                 "where extract(YEAR from F.RELEASE_DATE) = :year " +
                 "group by F.FILM_ID " +
-                "order by COUNT(L.USER_ID) DESC " +
+                "order by COUNT(L.USER_ID) " +
                 "limit :count";
-        List<Film> topFilms = jdbcOperations.query(sqlQuery,
-                Map.of("year", year, "count", count),
-                new FilmRowMapper());
-        topFilms.sort(new TopFilmComparator());
-        return topFilms;
+        return jdbcOperations.query(sqlQuery, Map.of("year", year, "count", count), new FilmRowMapper());
     }
 
     @Override
-    public List<Film> getMostPopularFilmsByGenre(long genreId, int count){
-        final String sqlQuery = "select * " +
+    public List<Film> getMostPopularFilmsByGenre(long genreId, int count) {
+        final String sqlQuery = "select F.FILM_ID, " +
+                                       "F.NAME, " +
+                                       "F.RELEASE_DATE, " +
+                                       "F.DESCRIPTION, " +
+                                       "F.DURATION, " +
+                                       "M.MPA_ID, " +
+                                       "M.NAME, " +
+                                       "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
@@ -217,29 +227,28 @@ public class FilmDbRepository implements FilmRepository {
                 "from FILMS_GENRES " +
                 "where GENRE_ID = :genreId) " +
                 "group by F.FILM_ID " +
-                "order by COUNT(L.USER_ID) DESC " +
+                "order by COUNT(L.USER_ID) " +
                 "limit :count";
-        List<Film> topFilms = jdbcOperations.query(sqlQuery,
-                Map.of("genreId", genreId,"count", count),
-                new FilmRowMapper());
-        topFilms.sort(new TopFilmComparator());
-        return topFilms;
+        return jdbcOperations.query(sqlQuery, Map.of("genreId", genreId,"count", count), new FilmRowMapper());
     }
 
     @Override
-    public List<Film> getMostPopularFilms(int count){
-        final String sqlQuery = "select * " +
+    public List<Film> getMostPopularFilms(int count) {
+        final String sqlQuery = "select F.FILM_ID, " +
+                                       "F.NAME, " +
+                                       "F.RELEASE_DATE, " +
+                                       "F.DESCRIPTION, " +
+                                       "F.DURATION, " +
+                                       "M.MPA_ID, " +
+                                       "M.NAME, " +
+                                       "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
                 "group by F.FILM_ID " +
                 "order by COUNT(L.USER_ID) DESC " +
                 "limit :count";
-        List<Film> topFilms = jdbcOperations.query(sqlQuery,
-                Map.of("count", count),
-                new FilmRowMapper());
-        topFilms.sort(new TopFilmComparator());
-        return topFilms;
+        return jdbcOperations.query(sqlQuery,  Map.of("count", count), new FilmRowMapper());
     }
 
     @Override

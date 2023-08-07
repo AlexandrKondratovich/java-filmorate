@@ -55,21 +55,17 @@ public class FilmService {
         return filmRepository.getFilmGenres(filmId);
     }
 
-    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count){
-        int limit = 10;
-        if (count != null) {
-            limit = count;
-        }
+    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count) {
         if (genreId != null) {
             if (year != null) {
-                return filmRepository.getMostPopularFilmsByYearAndGenre(genreId, year, limit);
+                return filmRepository.getMostPopularFilmsByYearAndGenre(genreId, year, count);
             } else {
-                return filmRepository.getMostPopularFilmsByGenre(genreId, limit);
+                return filmRepository.getMostPopularFilmsByGenre(genreId, count);
             }
         } else if (year != null) {
-            return filmRepository.getMostPopularFilmsByYear(year, limit);
+            return filmRepository.getMostPopularFilmsByYear(year, count);
         } else {
-            return filmRepository.getMostPopularFilms(limit);
+            return filmRepository.getMostPopularFilms(count);
         }
     }
 
