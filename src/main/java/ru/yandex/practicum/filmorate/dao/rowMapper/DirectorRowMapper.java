@@ -10,6 +10,6 @@ public class DirectorRowMapper implements RowMapper<Director> {
 
     @Override
     public Director mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new Director(rs.getInt("DIRECTOR_ID"), rs.getString("NAME"));
+        return new Director(rs.getInt("director_id"), rs.getString("name"));
     }
 }
