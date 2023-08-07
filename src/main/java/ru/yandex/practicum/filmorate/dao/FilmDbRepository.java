@@ -30,7 +30,6 @@ public class FilmDbRepository implements FilmRepository {
         this.jdbcOperations = jdbcOperations;
     }
 
-
     @Override
     public Film getById(long filmId) {
         checkFilmId(filmId);
@@ -121,52 +120,6 @@ public class FilmDbRepository implements FilmRepository {
         return updateDirectors(film);
     }
 
-    private void updateGenres(Film film) {
-        final String deleteSqlQuery = "delete from FILMS_GENRES " +
-                "where FILM_ID = :filmId";
-        jdbcOperations.update(deleteSqlQuery, Map.of("filmId", film.getId()));
-        final String addSqlQuery = "insert into FILMS_GENRES (FILM_ID, GENRE_ID) " +
-                "values (:filmId, :genreId)";
-        film.getGenres().forEach(genre ->
-                jdbcOperations.update(addSqlQuery, Map.of("filmId", film.getId(), "genreId", genre.getId())));
-    }
-
-    private Film updateDirectors(Film film) {
-        final String deleteSqlQuery = "delete from FILM_DIRECTORS " +
-                "where FILM_ID = :filmId";
-        jdbcOperations.update(deleteSqlQuery, Map.of("filmId", film.getId()));
-
-        film.getDirectors()
-                .forEach(director -> addDirectorToFilm(film.getId(), director.getId()));
-        return getById(film.getId());
-    }
-
-    private void addDirectorToFilm(long filmId, int directorId) {
-
-        String sql = "INSERT INTO FILM_DIRECTORS(FILM_ID, DIRECTOR_ID) VALUES ( :filmId, :directorId )";
-        jdbcOperations.update(sql, Map.of("filmId", filmId, "directorId", directorId));
-    }
-
-    private void checkDirectorsList(Film film) {
-
-        String sql = "select * from DIRECTORS";
-
-        if (!film.getDirectors().isEmpty()) {
-            List<Integer> filmDirectorIdList = film.getDirectors().stream()
-                    .map(Director::getId)
-                    .distinct()
-                    .collect(Collectors.toList());
-            List<Integer> directorsInDb = jdbcOperations.query(sql, new DirectorRowMapper()).stream()
-                    .map(Director::getId)
-                    .collect(Collectors.toList());
-            for (Integer directorId : filmDirectorIdList) {
-                if (!directorsInDb.contains(directorId)) {
-                    throw new ValidationException("Режиссер в запросе должен соответствовать с базой данных");
-                }
-            }
-        }
-    }
-
     @Override
     public List<User> getFilmLikes(long filmId) {
         checkFilmId(filmId);
@@ -203,13 +156,6 @@ public class FilmDbRepository implements FilmRepository {
         jdbcOperations.update(sqlQuery, Map.of("filmId", filmId, "userId", userId));
     }
 
-    public void deleteLikesByFilmId(long filmId) {
-        checkFilmId(filmId);
-        final String sqlQuery = "delete from LIKES " +
-                "where FILM_ID = :filmId";
-        jdbcOperations.update(sqlQuery, Map.of("filmId", filmId));
-    }
-
     @Override
     public List<Genre> getFilmGenres(long filmId) {
         final String sqlQuery = "select * " +
@@ -222,36 +168,78 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sqlQuery, Map.of("filmId", filmId), new GenreRowMapper());
     }
 
-    private void addGenreToFilm(long filmId, long genreId) {
-        String sqlQuery = "select GENRE_ID " +
+    @Override
+    public List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count){
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M on F.MPA_ID = M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "where F.FILM_ID IN (" +
+                    "select FILM_ID " +
+                    "from FILMS_GENRES " +
+                    "where GENRE_ID = :genreId) " +
+                "and extract(YEAR from F.RELEASE_DATE) = :year " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC " +
+                "limit :count";
+        List<Film> topFilms = jdbcOperations.query(sqlQuery,
+                Map.of("genreId", genreId, "year", year, "count", count),
+                new FilmRowMapper());
+        topFilms.sort(new TopFilmComparator());
+        return topFilms;
+    }
+
+    @Override
+    public List<Film> getMostPopularFilmsByYear(int year, int count){
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M on F.MPA_ID = M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "where extract(YEAR from F.RELEASE_DATE) = :year " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC " +
+                "limit :count";
+        List<Film> topFilms = jdbcOperations.query(sqlQuery,
+                Map.of("year", year, "count", count),
+                new FilmRowMapper());
+        topFilms.sort(new TopFilmComparator());
+        return topFilms;
+    }
+
+    @Override
+    public List<Film> getMostPopularFilmsByGenre(long genreId, int count){
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M on F.MPA_ID = M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "where F.FILM_ID IN (" +
+                "select FILM_ID " +
                 "from FILMS_GENRES " +
-                "where FILM_ID = :filmId";
-        List<Long> genres = jdbcOperations.queryForList(sqlQuery, Map.of("filmId", filmId), Long.class);
-        sqlQuery = "insert into FILMS_GENRES(FILM_ID, GENRE_ID) " +
-                "values (:filmId, :genreId)";
-        if (!genres.contains(genreId)) {
-            jdbcOperations.update(sqlQuery, Map.of("filmId", filmId, "genreId", genreId));
-        }
+                "where GENRE_ID = :genreId) " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC " +
+                "limit :count";
+        List<Film> topFilms = jdbcOperations.query(sqlQuery,
+                Map.of("genreId", genreId,"count", count),
+                new FilmRowMapper());
+        topFilms.sort(new TopFilmComparator());
+        return topFilms;
     }
 
-    private void checkUserId(long userId) {
-        final String sqlQuery = "select USER_ID " +
-                "from USERS " +
-                "where USER_ID = :userId ";
-        List<Long> usersId = jdbcOperations.queryForList(sqlQuery, Map.of("userId", userId), Long.class);
-        if (usersId.size() != 1) {
-            throw new UserNotFoundException(userId);
-        }
-    }
-
-    private void checkFilmId(long filmId) {
-        String sqlQuery = "select FILM_ID " +
-                "from FILMS " +
-                "where FILM_ID = :filmId";
-        List<Long> ids = jdbcOperations.queryForList(sqlQuery, Map.of("filmId", filmId), Long.class);
-        if (!ids.contains(filmId)) {
-            throw new FilmNotFoundException(filmId);
-        }
+    @Override
+    public List<Film> getMostPopularFilms(int count){
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M on F.MPA_ID = M.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "group by F.FILM_ID " +
+                "order by COUNT(L.USER_ID) DESC " +
+                "limit :count";
+        List<Film> topFilms = jdbcOperations.query(sqlQuery,
+                Map.of("count", count),
+                new FilmRowMapper());
+        topFilms.sort(new TopFilmComparator());
+        return topFilms;
     }
 
     @Override
@@ -283,24 +271,6 @@ public class FilmDbRepository implements FilmRepository {
                 "order by COUNT(L.USER_ID) DESC";
 
         return jdbcOperations.query(sqlQuery, Map.of("directorId", directorId), new FilmRowMapper());
-    }
-
-    private void checkDirectorById(int id) {
-
-        String sql = "select * from DIRECTORS where DIRECTOR_ID = :id";
-        List<Director> directorList = jdbcOperations.query(sql, Map.of("id", id), new DirectorRowMapper());
-        if (directorList.isEmpty()) {
-            throw new DirectorNotFoundException("Режиссера c идентификатором " + id + " не найдено в базе ");
-        }
-    }
-
-    private List<Director> getDirectorListByFilmId(Long filmId) {
-        String sql = "select FD.DIRECTOR_ID, D.NAME " +
-                "FROM FILM_DIRECTORS as FD " +
-                "JOIN DIRECTORS AS D ON FD.DIRECTOR_ID = D.DIRECTOR_ID " +
-                "where FD.FILM_ID = :filmId";
-
-        return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
     }
 
     @Override
@@ -355,6 +325,108 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sql, Map.of("regex", regex), new FilmRowMapper());
     }
 
+    private void addGenreToFilm(long filmId, long genreId) {
+        String sqlQuery = "select GENRE_ID " +
+                "from FILMS_GENRES " +
+                "where FILM_ID = :filmId";
+        List<Long> genres = jdbcOperations.queryForList(sqlQuery, Map.of("filmId", filmId), Long.class);
+        sqlQuery = "insert into FILMS_GENRES(FILM_ID, GENRE_ID) " +
+                "values (:filmId, :genreId)";
+        if (!genres.contains(genreId)) {
+            jdbcOperations.update(sqlQuery, Map.of("filmId", filmId, "genreId", genreId));
+        }
+    }
+
+    private void checkUserId(long userId) {
+        final String sqlQuery = "select USER_ID " +
+                "from USERS " +
+                "where USER_ID = :userId ";
+        List<Long> usersId = jdbcOperations.queryForList(sqlQuery, Map.of("userId", userId), Long.class);
+        if (usersId.size() != 1) {
+            throw new UserNotFoundException(userId);
+        }
+    }
+
+    private void checkFilmId(long filmId) {
+        String sqlQuery = "select FILM_ID " +
+                "from FILMS " +
+                "where FILM_ID = :filmId";
+        List<Long> ids = jdbcOperations.queryForList(sqlQuery, Map.of("filmId", filmId), Long.class);
+        if (!ids.contains(filmId)) {
+            throw new FilmNotFoundException(filmId);
+        }
+    }
+
+    private void checkDirectorById(int id) {
+        String sql = "select * from DIRECTORS where DIRECTOR_ID = :id";
+        List<Director> directorList = jdbcOperations.query(sql, Map.of("id", id), new DirectorRowMapper());
+        if (directorList.isEmpty()) {
+            throw new DirectorNotFoundException("Режиссера c идентификатором " + id + " не найдено в базе ");
+        }
+    }
+
+    private List<Director> getDirectorListByFilmId(Long filmId) {
+        String sql = "select FD.DIRECTOR_ID, D.NAME " +
+                "FROM FILM_DIRECTORS as FD " +
+                "JOIN DIRECTORS AS D ON FD.DIRECTOR_ID = D.DIRECTOR_ID " +
+                "where FD.FILM_ID = :filmId";
+
+        return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
+    }
+
+    public void deleteLikesByFilmId(long filmId) {
+        checkFilmId(filmId);
+        final String sqlQuery = "delete from LIKES " +
+                "where FILM_ID = :filmId";
+        jdbcOperations.update(sqlQuery, Map.of("filmId", filmId));
+    }
+
+    private void updateGenres(Film film) {
+        final String deleteSqlQuery = "delete from FILMS_GENRES " +
+                "where FILM_ID = :filmId";
+        jdbcOperations.update(deleteSqlQuery, Map.of("filmId", film.getId()));
+        final String addSqlQuery = "insert into FILMS_GENRES (FILM_ID, GENRE_ID) " +
+                "values (:filmId, :genreId)";
+        film.getGenres().forEach(genre ->
+                jdbcOperations.update(addSqlQuery, Map.of("filmId", film.getId(), "genreId", genre.getId())));
+    }
+
+    private Film updateDirectors(Film film) {
+        final String deleteSqlQuery = "delete from FILM_DIRECTORS " +
+                "where FILM_ID = :filmId";
+        jdbcOperations.update(deleteSqlQuery, Map.of("filmId", film.getId()));
+
+        film.getDirectors()
+                .forEach(director -> addDirectorToFilm(film.getId(), director.getId()));
+        return getById(film.getId());
+    }
+
+    private void addDirectorToFilm(long filmId, int directorId) {
+
+        String sql = "INSERT INTO FILM_DIRECTORS(FILM_ID, DIRECTOR_ID) VALUES ( :filmId, :directorId )";
+        jdbcOperations.update(sql, Map.of("filmId", filmId, "directorId", directorId));
+    }
+
+    private void checkDirectorsList(Film film) {
+
+        String sql = "select * from DIRECTORS";
+
+        if (!film.getDirectors().isEmpty()) {
+            List<Integer> filmDirectorIdList = film.getDirectors().stream()
+                    .map(Director::getId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<Integer> directorsInDb = jdbcOperations.query(sql, new DirectorRowMapper()).stream()
+                    .map(Director::getId)
+                    .collect(Collectors.toList());
+            for (Integer directorId : filmDirectorIdList) {
+                if (!directorsInDb.contains(directorId)) {
+                    throw new ValidationException("Режиссер в запросе должен соответствовать с базой данных");
+                }
+            }
+        }
+    }
+
     private class FilmRowMapper implements RowMapper<Film> {
         @Override
         public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -364,7 +436,7 @@ public class FilmDbRepository implements FilmRepository {
                     rs.getDate("RELEASE_DATE").toLocalDate(),
                     rs.getLong("DURATION"),
                     new Mpa(rs.getLong("MPA.MPA_ID"), rs.getString("MPA.NAME")),
-                    new ArrayList<>(getDirectorListByFilmId(rs.getLong("FILM_ID"))),
+                    new HashSet<>(getDirectorListByFilmId(rs.getLong("FILM_ID"))),
                     new HashSet<>(getFilmGenres(rs.getLong("FILM_ID"))),
                     new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
         }
