@@ -395,5 +395,4 @@ public class FilmDbRepository implements FilmRepository {
                     new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
         }
     }
-
 }
