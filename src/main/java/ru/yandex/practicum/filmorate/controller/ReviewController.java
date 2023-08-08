@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.service.ReviewService;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
@@ -41,7 +40,7 @@ public class ReviewController {
     }
 
     @GetMapping
-    public List<Review> getAllReviewByFilmId(@RequestParam Optional<Long> filmId, @RequestParam Optional<Integer> count) {
+    public List<Review> getAllReviewByFilmId(@RequestParam(defaultValue = "0") Long filmId, @RequestParam(defaultValue = "10") Integer count) {
         return reviewService.getAllReviewByFilmId(filmId, count);
     }
 

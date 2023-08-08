@@ -27,8 +27,8 @@ public class UserDbRepository implements UserRepository {
     public User getById(long userId) {
         checkUserId(userId);
         final String sqlQuery = "select * " +
-                        "from USERS " +
-                        "where USER_ID = :userId";
+                "from USERS " +
+                "where USER_ID = :userId";
         final List<User> users = jdbcOperations.query(sqlQuery, Map.of("userId", userId), new UserRowMapper());
         return users.get(0);
     }
@@ -60,26 +60,26 @@ public class UserDbRepository implements UserRepository {
     public void delete(long userId) {
         checkUserId(userId);
         String sqlQuery = "delete from USERS " +
-                        "where USER_ID = :userId";
+                "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
         sqlQuery = "delete from LIKES " +
                 "where USER_ID = :userId";
-        jdbcOperations.update(sqlQuery,Map.of("userId", userId));
+        jdbcOperations.update(sqlQuery, Map.of("userId", userId));
 
         sqlQuery = "delete from LIKES " +
                 "where USER_ID = :userId";
-        jdbcOperations.update(sqlQuery,Map.of("userId", userId));
+        jdbcOperations.update(sqlQuery, Map.of("userId", userId));
     }
 
     @Override
     public User update(User user) {
         checkUserId(user.getId());
         final String sqlQuery = "update USERS " +
-                        "set EMAIL = :email, " +
-                            "LOGIN = :login, " +
-                            "NAME = :name, " +
-                            "BIRTHDAY = :birthday " +
-                        "where USER_ID = :userId";
+                "set EMAIL = :email, " +
+                "LOGIN = :login, " +
+                "NAME = :name, " +
+                "BIRTHDAY = :birthday " +
+                "where USER_ID = :userId";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("userId", user.getId());
         map.addValue("email", user.getEmail());
@@ -105,7 +105,7 @@ public class UserDbRepository implements UserRepository {
             throw new RuntimeException("Такой запрос дружбы уже существует.");
         }
         sqlQuery = "insert into FRIENDSHIP_REQUESTS(USER_FROM, USER_TO) " +
-                        "values (:userFrom, :userTo)";
+                "values (:userFrom, :userTo)";
         jdbcOperations.update(sqlQuery, Map.of("userFrom", userFromId, "userTo", userToId));
         return getFriendsByUserId(userFromId);
     }
@@ -134,9 +134,9 @@ public class UserDbRepository implements UserRepository {
         final String sqlQuery = "select * " +
                 "from USERS " +
                 "where USER_ID in (" +
-                                   "select USER_TO " +
-                                   "from FRIENDSHIP_REQUESTS " +
-                                   "where USER_FROM = :userId) " +
+                "select USER_TO " +
+                "from FRIENDSHIP_REQUESTS " +
+                "where USER_FROM = :userId) " +
                 "order by USER_ID";
         return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new UserRowMapper());
     }
@@ -156,9 +156,9 @@ public class UserDbRepository implements UserRepository {
         final String sqlQuery = "select USER_TO " +
                 "from FRIENDSHIP_REQUESTS " +
                 "where USER_FROM = :firstUserId and USER_TO in (" +
-                                   "select USER_TO " +
-                                   "from FRIENDSHIP_REQUESTS " +
-                                   "where USER_FROM = :secondUserId)";
+                "select USER_TO " +
+                "from FRIENDSHIP_REQUESTS " +
+                "where USER_FROM = :secondUserId)";
         List<Long> commonFriendsIds = jdbcOperations.queryForList(sqlQuery,
                 Map.of("firstUserId", firstUserId, "secondUserId", secondUserId),
                 Long.class);
