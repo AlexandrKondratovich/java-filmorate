@@ -6,8 +6,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.rowMapper.ReviewRowMapper;
+import ru.yandex.practicum.filmorate.exception.LikeAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.ReviewNotExistObject;
 import ru.yandex.practicum.filmorate.model.Review;
 
@@ -33,7 +35,6 @@ public class ReviewDbRepository implements ReviewRepository {
         map.addValue("filmId", review.getFilmId());
         jdbcOperations.update(sql, map, keyHolder);
         review.setReviewId(keyHolder.getKey().longValue());
-        updateUseful(review);
         log.info("Отзыв " + review + " создан");
         return getReviewById(review.getReviewId());
     }
@@ -82,11 +83,6 @@ public class ReviewDbRepository implements ReviewRepository {
             sql = "SELECT * " +
                     "FROM REVIEWS " +
                     "ORDER BY USEFUL DESC ";
-        } else if (count != 10) {
-            sql = "SELECT * " +
-                    "FROM REVIEWS " +
-                    "ORDER BY USEFUL DESC " +
-                    "LIMIT :count ";
         } else {
             sql = "SELECT * " +
                     "FROM REVIEWS " +
@@ -104,54 +100,84 @@ public class ReviewDbRepository implements ReviewRepository {
 
     @Override
     public void addLike(long reviewId, long userId) {
-        String sql = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
-                "WHERE REVIEW_ID = :reviewId ";
+        Boolean isLike = true;
+        String sqlForgetReviewLikes = "SELECT * " +
+                "FROM REVIEWS_LIKES " +
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
-        jdbcOperations.update(sql, map);
+        map.addValue("userId", userId);
+        SqlRowSet reviewLikeRows = jdbcOperations.queryForRowSet(sqlForgetReviewLikes, map);
+        if (!reviewLikeRows.next()) {
+            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, ISLIKE) " +
+                    "VALUES (:reviewId, :userId, :isLike) ";
+            MapSqlParameterSource mapForSetLike = new MapSqlParameterSource();
+            mapForSetLike.addValue("reviewId", reviewId);
+            mapForSetLike.addValue("userId", userId);
+            mapForSetLike.addValue("isLike", isLike);
+            jdbcOperations.update(sql, mapForSetLike);
+            incrementUseful(reviewId);
+        } else if (reviewLikeRows.next() && !reviewLikeRows.getBoolean("ISLIKE")) {
+            String sql = "UPDATE REVIEWS_LIKES " +
+                    "SET ISLIKE = :isLike ";
+            jdbcOperations.update(sql, Map.of("isLike", isLike));
+            incrementUseful(reviewId);
+        } else {
+            throw new LikeAlreadyExistException("Данный пользователь уже ставил лайк");
+        }
     }
 
     @Override
     public void addDislike(long reviewId, long userId) {
-        String sql = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
-                "WHERE REVIEW_ID = :reviewId ";
+        Boolean isLike = false;
+        String sqlForgetReviewLikes = "SELECT * " +
+                "FROM REVIEWS_LIKES " +
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
-        jdbcOperations.update(sql, map);
+        map.addValue("userId", userId);
+        SqlRowSet reviewLikeRows = jdbcOperations.queryForRowSet(sqlForgetReviewLikes, map);
+        if (!reviewLikeRows.next()) {
+            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, ISLIKE) " +
+                    "VALUES (:reviewId, :userId, :isLike) ";
+            MapSqlParameterSource mapForSetDisLike = new MapSqlParameterSource();
+            mapForSetDisLike.addValue("reviewId", reviewId);
+            mapForSetDisLike.addValue("userId", userId);
+            mapForSetDisLike.addValue("isLike", isLike);
+            jdbcOperations.update(sql, mapForSetDisLike);
+                decrementUseful(reviewId);
+        } else if (reviewLikeRows.next() && reviewLikeRows.getBoolean("ISLIKE")) {
+            String sql = "UPDATE REVIEWS_LIKES " +
+                    "SET ISLIKE = :isLike ";
+            jdbcOperations.update(sql, Map.of("isLike", isLike));
+                decrementUseful(reviewId);
+        } else {
+            throw new LikeAlreadyExistException("Данный пользователь уже ставил дизлайк");
+        }
     }
 
     @Override
     public void deleteLike(long reviewId, long userId) {
-        if (getReviewById(reviewId).getUseful() == 0) {
-            log.info("У отзыва рейтинг равен 0");
-            return;
-        }
-        String sql = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
-                "WHERE REVIEW_ID = :reviewId ";
+        Boolean isLike = true;
+        String sql = "DELETE FROM REVIEWS_LIKES " +
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND ISLIKE = :isLike";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
+        map.addValue("userId", userId);
+        map.addValue("isLike", isLike);
         jdbcOperations.update(sql, map);
     }
 
     @Override
     public void deleteDislike(long reviewId, long userId) {
-        String sql = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
-                "WHERE REVIEW_ID = :reviewId ";
-        if (getReviewById(reviewId).getUseful() == 0) {
-            log.info("У отзыва рейтинг равен 0");
-            return;
-        }
+        Boolean isLike = false;
+        String sql = "DELETE FROM REVIEWS_LIKES " +
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND ISLIKE = :isLike";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
+        map.addValue("userId", userId);
+        map.addValue("isLike", isLike);
         jdbcOperations.update(sql, map);
-    }
-
-    public void updateUseful(Review review) {
-        int useful = review.getUseful();
-        if (review.getIsPositive()) {
-            review.setUseful(++useful);
-            log.info("Количество лайков отзыва " + review + " увеличено");
-        }
     }
 
     public void checkExistence(int count, long id) {
@@ -159,5 +185,22 @@ public class ReviewDbRepository implements ReviewRepository {
             throw new ReviewNotExistObject("Отзыв с айди " + id + " не найден");
         }
     }
+
+    public void incrementUseful(long reviewId) {
+        String sqlForReviews = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
+                "WHERE REVIEW_ID = :reviewId ";
+        MapSqlParameterSource map = new MapSqlParameterSource();
+        map.addValue("reviewId", reviewId);
+        jdbcOperations.update(sqlForReviews, map);
+    }
+
+    public void decrementUseful(long reviewId) {
+        String sqlForReviews = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
+                "WHERE REVIEW_ID = :reviewId ";
+        MapSqlParameterSource map = new MapSqlParameterSource();
+        map.addValue("reviewId", reviewId);
+        jdbcOperations.update(sqlForReviews, map);
+    }
+
 
 }
