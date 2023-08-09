@@ -55,7 +55,7 @@ public class FilmService {
         return filmRepository.getFilmGenres(filmId);
     }
 
-    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count) {
+    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count){
         if (genreId != null) {
             if (year != null) {
                 return filmRepository.getMostPopularFilmsByYearAndGenre(genreId, year, count);
