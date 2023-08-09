@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.TopFilmComparator;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -56,20 +55,18 @@ public class FilmService {
         return filmRepository.getFilmGenres(filmId);
     }
 
-    public List<Film> getTopFilms(Integer count) {
-        TopFilmComparator comparator = new TopFilmComparator();
-        List<Film> films = new ArrayList<>(filmRepository.getFilmsList());
-        films.sort(comparator);
-        if (count == null) {
-            if (films.size() > 10) {
-                films.subList(0, 9);
+    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count) {
+        if (genreId != null) {
+            if (year != null) {
+                return filmRepository.getMostPopularFilmsByYearAndGenre(genreId, year, count);
+            } else {
+                return filmRepository.getMostPopularFilmsByGenre(genreId, count);
             }
+        } else if (year != null) {
+            return filmRepository.getMostPopularFilmsByYear(year, count);
         } else {
-            if (films.size() >= count) {
-                films = films.subList(0, count);
-            }
+            return filmRepository.getMostPopularFilms(count);
         }
-        return films;
     }
 
     public List<Film> getFilmDirectorsSortedList(int directorId, String sortBy) {

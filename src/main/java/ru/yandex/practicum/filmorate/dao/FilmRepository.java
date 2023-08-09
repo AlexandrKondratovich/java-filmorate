@@ -35,4 +35,12 @@ public interface FilmRepository {
     List<Film> searchFilmsByName(String query);
 
     List<Film> searchFilmsByDir(String query);
+
+    List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count);
+
+    List<Film> getMostPopularFilmsByYear(int year, int count);
+
+    List<Film> getMostPopularFilmsByGenre(long genreId, int count);
+
+    List<Film> getMostPopularFilms(int count);
 }
