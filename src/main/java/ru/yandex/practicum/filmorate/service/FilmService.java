@@ -3,11 +3,10 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.EventRepository;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 
@@ -16,6 +15,8 @@ import java.util.*;
 public class FilmService {
     @Qualifier("filmDbRepository")
     final FilmRepository filmRepository;
+    @Qualifier("eventDbRepository")
+    final EventRepository eventRepository;
 
     public Film get(long filmId) {
         return filmRepository.getById(filmId);
@@ -41,10 +42,12 @@ public class FilmService {
 
     public void addLike(long filmId, long userId) {
         filmRepository.addLike(filmId, userId);
+        eventRepository.add(EventRepository.createEvent(userId, EventType.LIKE, filmId, Operation.ADD));
     }
 
     public void deleteLike(long filmId, long userId) {
         filmRepository.deleteLike(filmId, userId);
+        eventRepository.add(EventRepository.createEvent(userId, EventType.LIKE, filmId, Operation.REMOVE));
     }
 
     public List<User> getFIlmLikes(long filmId) {
@@ -55,18 +58,20 @@ public class FilmService {
         return filmRepository.getFilmGenres(filmId);
     }
 
-    public List<Film> getMostPopularFilms(Long genreId, Integer year, Integer count) {
-        if (genreId != null) {
-            if (year != null) {
-                return filmRepository.getMostPopularFilmsByYearAndGenre(genreId, year, count);
-            } else {
-                return filmRepository.getMostPopularFilmsByGenre(genreId, count);
+    public List<Film> getTopFilms(Integer count) {
+        TopFilmComparator comparator = new TopFilmComparator();
+        List<Film> films = new ArrayList<>(filmRepository.getFilmsList());
+        films.sort(comparator);
+        if (count == null) {
+            if (films.size() > 10) {
+                films.subList(0, 9);
             }
-        } else if (year != null) {
-            return filmRepository.getMostPopularFilmsByYear(year, count);
         } else {
-            return filmRepository.getMostPopularFilms(count);
+            if (films.size() >= count) {
+                films = films.subList(0, count);
+            }
         }
+        return films;
     }
 
     public List<Film> getFilmDirectorsSortedList(int directorId, String sortBy) {
