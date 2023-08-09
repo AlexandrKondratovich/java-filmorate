@@ -25,7 +25,7 @@ public class ReviewDbRepository implements ReviewRepository {
 
     @Override
     public Review addReview(Review review) {
-        String sql = "INSERT INTO REVIEWS (CONTENT, ISPOSITIVE, USER_ID, FILM_ID) " +
+        String sql = "INSERT INTO REVIEWS (CONTENT, IS_POSITIVE, USER_ID, FILM_ID) " +
                 "VALUES (:content, :isPositive, :userId, :filmId) ";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource map = new MapSqlParameterSource();
@@ -41,7 +41,7 @@ public class ReviewDbRepository implements ReviewRepository {
 
     @Override
     public Review updateReview(Review review) {
-        String sql = "UPDATE REVIEWS SET CONTENT = :content, ISPOSITIVE = :isPositive " +
+        String sql = "UPDATE REVIEWS SET CONTENT = :content, IS_POSITIVE = :isPositive " +
                 "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("content", review.getContent());
@@ -109,7 +109,7 @@ public class ReviewDbRepository implements ReviewRepository {
         map.addValue("userId", userId);
         SqlRowSet reviewLikeRows = jdbcOperations.queryForRowSet(sqlForgetReviewLikes, map);
         if (!reviewLikeRows.next()) {
-            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, ISLIKE) " +
+            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, IS_LIKE) " +
                     "VALUES (:reviewId, :userId, :isLike) ";
             MapSqlParameterSource mapForSetLike = new MapSqlParameterSource();
             mapForSetLike.addValue("reviewId", reviewId);
@@ -119,7 +119,7 @@ public class ReviewDbRepository implements ReviewRepository {
             incrementUseful(reviewId);
         } else if (reviewLikeRows.next() && !reviewLikeRows.getBoolean("ISLIKE")) {
             String sql = "UPDATE REVIEWS_LIKES " +
-                    "SET ISLIKE = :isLike ";
+                    "SET IS_LIKE = :isLike ";
             jdbcOperations.update(sql, Map.of("isLike", isLike));
             incrementUseful(reviewId);
         } else {
@@ -138,7 +138,7 @@ public class ReviewDbRepository implements ReviewRepository {
         map.addValue("userId", userId);
         SqlRowSet reviewLikeRows = jdbcOperations.queryForRowSet(sqlForgetReviewLikes, map);
         if (!reviewLikeRows.next()) {
-            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, ISLIKE) " +
+            String sql = "INSERT INTO REVIEWS_LIKES (REVIEW_ID, USER_ID, IS_LIKE) " +
                     "VALUES (:reviewId, :userId, :isLike) ";
             MapSqlParameterSource mapForSetDisLike = new MapSqlParameterSource();
             mapForSetDisLike.addValue("reviewId", reviewId);
@@ -148,7 +148,7 @@ public class ReviewDbRepository implements ReviewRepository {
                 decrementUseful(reviewId);
         } else if (reviewLikeRows.next() && reviewLikeRows.getBoolean("ISLIKE")) {
             String sql = "UPDATE REVIEWS_LIKES " +
-                    "SET ISLIKE = :isLike ";
+                    "SET IS_LIKE = :isLike ";
             jdbcOperations.update(sql, Map.of("isLike", isLike));
                 decrementUseful(reviewId);
         } else {
@@ -160,7 +160,7 @@ public class ReviewDbRepository implements ReviewRepository {
     public void deleteLike(long reviewId, long userId) {
         Boolean isLike = true;
         String sql = "DELETE FROM REVIEWS_LIKES " +
-                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND ISLIKE = :isLike";
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND IS_LIKE = :isLike";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
         map.addValue("userId", userId);
@@ -172,7 +172,7 @@ public class ReviewDbRepository implements ReviewRepository {
     public void deleteDislike(long reviewId, long userId) {
         Boolean isLike = false;
         String sql = "DELETE FROM REVIEWS_LIKES " +
-                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND ISLIKE = :isLike";
+                "WHERE REVIEW_ID = :reviewId AND USER_ID = :userId AND IS_LIKE = :isLike";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("reviewId", reviewId);
         map.addValue("userId", userId);
