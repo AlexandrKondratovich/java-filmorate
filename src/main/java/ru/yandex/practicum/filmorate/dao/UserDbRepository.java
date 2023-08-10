@@ -59,16 +59,31 @@ public class UserDbRepository implements UserRepository {
     @Override
     public void delete(long userId) {
         checkUserId(userId);
-        String sqlQuery = "delete from USERS " +
+        String sqlQuery = "delete from FRIENDSHIP_REQUESTS " +
+                "where USER_FROM = :userId " +
+                "or USER_TO = :userId";
+        jdbcOperations.update(sqlQuery, Map.of("userId", userId));
+
+        sqlQuery = "delete from REVIEWS " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
-        sqlQuery = "delete from LIKES " +
+
+        sqlQuery = "delete from REVIEWS_LIKES " +
+                "where USER_ID = :userId";
+        jdbcOperations.update(sqlQuery, Map.of("userId", userId));
+
+        sqlQuery = "delete from EVENTS " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
 
         sqlQuery = "delete from LIKES " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
+
+        sqlQuery = "delete from USERS " +
+                "where USER_ID = :userId";
+        jdbcOperations.update(sqlQuery, Map.of("userId", userId));
+
     }
 
     @Override
