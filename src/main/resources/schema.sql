@@ -1,24 +1,21 @@
 CREATE TABLE IF NOT EXISTS GENRES (
                         genre_id INT PRIMARY KEY AUTO_INCREMENT,
-                        name VARCHAR(255),
-                        CONSTRAINT genres_pk
-                            PRIMARY KEY (genre_id)
+                        name VARCHAR(255)
 );
 ALTER TABLE GENRES ALTER COLUMN genre_id RESTART WITH 7;
 
 CREATE TABLE IF NOT EXISTS MPA (
                         mpa_id INT PRIMARY KEY AUTO_INCREMENT,
-                        name VARCHAR(10) NOT NULL,
-                        CONSTRAINT mpa_pk
-                            PRIMARY KEY (mpa_id)
+                        name VARCHAR(10),
+                        CONSTRAINT mpa_pk PRIMARY KEY (mpa_id)
+
 );
 ALTER TABLE MPA ALTER COLUMN mpa_id RESTART WITH 6;
 
 CREATE TABLE IF NOT EXISTS DIRECTORS (
-                        director_id INT PRIMARY KEY AUTO_INCREMENT,
-                        name VARCHAR(100) NOT NULL,
-                        CONSTRAINT directors_pk
-                            PRIMARY KEY (director_id)
+                        DIRECTOR_ID INT PRIMARY KEY AUTO_INCREMENT,
+                        NAME        CHARACTER VARYING NOT NULL,
+                        CONSTRAINT "DIRECTORS_pk" PRIMARY KEY (DIRECTOR_ID)
 );
 
 CREATE TABLE IF NOT EXISTS FILMS (
@@ -30,9 +27,7 @@ CREATE TABLE IF NOT EXISTS FILMS (
                         duration INT,
                         CONSTRAINT fk_film_mpa
                             FOREIGN KEY (mpa_id)
-                                REFERENCES MPA(mpa_id),
-                        CONSTRAINT films_pk
-                            PRIMARY KEY (film_id)
+                                REFERENCES MPA(mpa_id)
 );
 
 CREATE TABLE IF NOT EXISTS USERS (
@@ -40,9 +35,7 @@ CREATE TABLE IF NOT EXISTS USERS (
                         email VARCHAR(100) NOT NULL,
                         login VARCHAR(30) NOT NULL ,
                         name varchar(30),
-                        birthday DATE,
-                        CONSTRAINT users_pk
-                            PRIMARY KEY (user_id)
+                        birthday DATE
 );
 
 CREATE TABLE IF NOT EXISTS FRIENDSHIP_REQUESTS (
@@ -54,6 +47,7 @@ CREATE TABLE IF NOT EXISTS FRIENDSHIP_REQUESTS (
                         CONSTRAINT fk_friendship_friend
                             FOREIGN KEY (user_to)
                                 REFERENCES USERS(user_id)
+
 );
 
 CREATE TABLE IF NOT EXISTS FILMS_GENRES (
@@ -68,14 +62,12 @@ CREATE TABLE IF NOT EXISTS FILMS_GENRES (
 );
 
 CREATE TABLE IF NOT EXISTS FILM_DIRECTORS (
-                        film_id     INT NOT NULL,
-                        director_id INT NOT NULL,
+                        FILM_ID     INT NOT NULL,
+                        DIRECTOR_ID INT NOT NULL,
                         CONSTRAINT FILM_DIRECTORS_DIRECTORS_DIRECTOR_ID_FK
-                            FOREIGN KEY (director_id)
-                                REFERENCES DIRECTORS,
+                            FOREIGN KEY (DIRECTOR_ID) REFERENCES DIRECTORS,
                         CONSTRAINT "FILM_DIRECTORS_FILMS_FILM_ID_fk"
-                            FOREIGN KEY (film_id)
-                                REFERENCES FILMS
+                            FOREIGN KEY (FILM_ID) REFERENCES FILMS
 );
 
 CREATE TABLE IF NOT EXISTS LIKES (
@@ -90,31 +82,30 @@ CREATE TABLE IF NOT EXISTS LIKES (
                                 REFERENCES USERS(user_id)
 );
 
-CREATE TABLE IF NOT EXISTS FEED (
-                        event_id INT PRIMARY KEY AUTO_INCREMENT,
-                        user_id INT NOT NULL,
-                        timestamp TIMESTAMP NOT NULL,
-                        event_type VARCHAR(20) NOT NULL,
-                        entity_id INT NOT NULL,
-                        operation VARCHAR(20) NOT NULL,
-                        CONSTRAINT fk_feed_user
-                            FOREIGN KEY (user_id)
-                                REFERENCES USERS(user_id)
-
-);
-
 CREATE TABLE IF NOT EXISTS REVIEWS (
-REVIEW_ID INT PRIMARY KEY AUTO_INCREMENT,
-CONTENT VARCHAR(200) NOT NULL,
-ISPOSITIVE boolean,
-USER_ID INT NOT NULL REFERENCES USERS (user_id),
-FILM_ID INT NOT NULL REFERENCES FILMS (film_id),
-USEFUL INT DEFAULT 0
+                        REVIEW_ID INT PRIMARY KEY AUTO_INCREMENT,
+                        CONTENT VARCHAR(200) NOT NULL,
+                        IS_POSITIVE boolean,
+                        USER_ID INT NOT NULL REFERENCES USERS (user_id),
+                        FILM_ID INT NOT NULL REFERENCES FILMS (film_id),
+                        USEFUL INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS REVIEWS_LIKES (
-REVIEWS_LIKES_ID INT PRIMARY KEY AUTO_INCREMENT,
-REVIEW_ID INT NOT NULL REFERENCES REVIEWS (REVIEW_ID) ON DELETE CASCADE,
-USER_ID INT NOT NULL REFERENCES USERS (USER_ID) ON DELETE CASCADE,
-ISLIKE boolean
+                        REVIEWS_LIKES_ID INT PRIMARY KEY AUTO_INCREMENT,
+                        REVIEW_ID INT NOT NULL REFERENCES REVIEWS (REVIEW_ID) ON DELETE CASCADE,
+                        USER_ID INT NOT NULL REFERENCES USERS (USER_ID) ON DELETE CASCADE,
+                        IS_LIKE boolean
+);
+
+CREATE TABLE IF NOT EXISTS EVENTS (
+                        EVENT_ID INT PRIMARY KEY AUTO_INCREMENT,
+                        USER_ID INT NOT NULL,
+                        EVENT_TYPE VARCHAR(10) NOT NULL,
+                        OPERATION VARCHAR(10) NOT NULL,
+                        ENTITY_ID INT NOT NULL,
+                        TIMESTAMP BIGINT NOT NULL,
+                        CONSTRAINT fk_events_users
+                            FOREIGN KEY (USER_ID)
+                                REFERENCES USERS(USER_ID)
 )

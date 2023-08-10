@@ -141,16 +141,6 @@ public class UserDbRepository implements UserRepository {
         return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new UserRowMapper());
     }
 
-    private void checkUserId(long userId) {
-        final String sqlQuery = "select USER_ID " +
-                "from USERS " +
-                "where USER_ID = :userId ";
-        List<Long> usersId = jdbcOperations.queryForList(sqlQuery, Map.of("userId", userId), Long.class);
-        if (usersId.size() != 1) {
-            throw new UserNotFoundException(userId);
-        }
-    }
-
     @Override
     public List<User> getCommonFriends(long firstUserId, long secondUserId) {
         final String sqlQuery = "select USER_TO " +
@@ -163,6 +153,16 @@ public class UserDbRepository implements UserRepository {
                 Map.of("firstUserId", firstUserId, "secondUserId", secondUserId),
                 Long.class);
         return commonFriendsIds.stream().map(this::getById).collect(Collectors.toList());
+    }
+
+    private void checkUserId(long userId) {
+        final String sqlQuery = "select USER_ID " +
+                "from USERS " +
+                "where USER_ID = :userId ";
+        List<Long> usersId = jdbcOperations.queryForList(sqlQuery, Map.of("userId", userId), Long.class);
+        if (usersId.size() != 1) {
+            throw new UserNotFoundException(userId);
+        }
     }
 
     private static class UserRowMapper implements RowMapper<User> {
