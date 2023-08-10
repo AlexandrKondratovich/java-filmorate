@@ -7,9 +7,11 @@ import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
+import ru.yandex.practicum.filmorate.model.TopFilmComparator;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -95,5 +97,13 @@ public class FilmService {
             return filmRepository.searchFilmsByDirAndName(query);
         }
         throw new IncorrectParameterException("В запрос передан неправильный параметр, нужен 'director' и/или 'title'");
+    }
+
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> userFilms = filmRepository.findByUserId(userId);
+        List<Film> friendFilms = filmRepository.findByUserId(friendId);
+
+        return userFilms.stream()
+                .filter(friendFilms::contains).sorted(new TopFilmComparator()).collect(Collectors.toList());
     }
 }
