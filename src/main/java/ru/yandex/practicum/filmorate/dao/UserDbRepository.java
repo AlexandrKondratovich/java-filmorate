@@ -64,11 +64,11 @@ public class UserDbRepository implements UserRepository {
                 "or USER_TO = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
 
-        sqlQuery = "delete from REVIEWS " +
+        sqlQuery = "delete from REVIEWS_LIKES " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
 
-        sqlQuery = "delete from REVIEWS_LIKES " +
+        sqlQuery = "delete from REVIEWS " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
 
@@ -83,7 +83,6 @@ public class UserDbRepository implements UserRepository {
         sqlQuery = "delete from USERS " +
                 "where USER_ID = :userId";
         jdbcOperations.update(sqlQuery, Map.of("userId", userId));
-
     }
 
     @Override
