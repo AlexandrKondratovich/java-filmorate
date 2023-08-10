@@ -480,4 +480,16 @@ public class FilmDbRepository implements FilmRepository {
         }
     }
 
+    @Override
+    public List<Film> findByUserId(int userId) {
+        checkUserId(userId);
+
+        final String sqlQuery = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
+                "FROM FILMS F " +
+                "JOIN MPA as M ON F.MPA_ID=M.MPA_ID " +
+                "JOIN LIKES L ON F.film_id = L.film_id " +
+                "WHERE L.user_id = :userId";
+
+        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
+    }
 }

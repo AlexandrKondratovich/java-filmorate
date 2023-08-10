@@ -45,4 +45,6 @@ public interface FilmRepository {
     List<Film> getMostPopularFilms(int count);
 
     List<Film> getRecommendations(long userId);
+
+    List<Film> findByUserId(int userId);
 }
