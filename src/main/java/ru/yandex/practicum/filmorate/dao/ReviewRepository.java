@@ -4,7 +4,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
 
-interface ReviewRepository {
+public interface ReviewRepository {
 
     Review addReview(Review review);
 

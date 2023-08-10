@@ -3,12 +3,10 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.EventRepository;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.model.TopFilmComparator;
-import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,6 +16,8 @@ import java.util.stream.Collectors;
 public class FilmService {
     @Qualifier("filmDbRepository")
     final FilmRepository filmRepository;
+    @Qualifier("eventDbRepository")
+    final EventRepository eventRepository;
 
     public Film get(long filmId) {
         return filmRepository.getById(filmId);
@@ -43,10 +43,12 @@ public class FilmService {
 
     public void addLike(long filmId, long userId) {
         filmRepository.addLike(filmId, userId);
+        eventRepository.add(EventRepository.createEvent(userId, EventType.LIKE, filmId, Operation.ADD));
     }
 
     public void deleteLike(long filmId, long userId) {
         filmRepository.deleteLike(filmId, userId);
+        eventRepository.add(EventRepository.createEvent(userId, EventType.LIKE, filmId, Operation.REMOVE));
     }
 
     public List<User> getFIlmLikes(long filmId) {
