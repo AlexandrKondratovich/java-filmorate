@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.dao.EventRepository;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Operation;
+import ru.yandex.practicum.filmorate.dao.FilmRepository;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 
@@ -19,6 +21,8 @@ public class UserService {
 
     @Qualifier("userDbRepository")
     final UserRepository userRepository;
+    @Qualifier("filmDbRepository")
+    final FilmRepository filmRepository;
 
     @Qualifier("eventDbRepository")
     final EventRepository eventRepository;
@@ -73,5 +77,9 @@ public class UserService {
             user.setName(user.getLogin());
         }
         return user;
+    }
+
+    public List<Film> getRecommendations(long userId) {
+        return filmRepository.getRecommendations(userId);
     }
 }
