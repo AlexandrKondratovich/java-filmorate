@@ -383,8 +383,7 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
     }
 
-    public void deleteLikesByFilmId(long filmId) {
-        checkFilmId(filmId);
+    private void deleteLikesByFilmId(long filmId) {
         final String sqlQuery = "delete from LIKES " +
                 "where FILM_ID = :filmId";
         jdbcOperations.update(sqlQuery, Map.of("filmId", filmId));
