@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import ru.yandex.practicum.filmorate.dao.DirectorRepository;
-import ru.yandex.practicum.filmorate.exception.DirectorNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import javax.validation.ValidationException;
@@ -13,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DirectorService {
+public class  DirectorService {
 
     private final DirectorRepository directorRepository;
 
@@ -22,8 +21,7 @@ public class DirectorService {
     }
 
     public Director getDirectorById(int id) {
-        return directorRepository.getDirectorById(id).orElseThrow(() ->
-                new DirectorNotFoundException("Режиссера с ID " + id + " нет в базе"));
+        return directorRepository.getDirectorById(id);
     }
 
     public Director addDirector(Director director) {
@@ -34,18 +32,14 @@ public class DirectorService {
     }
 
     public Director updateDirector(Director director) {
-        directorRepository.getDirectorById(director.getId()).orElseThrow(() ->
-                new DirectorNotFoundException("Режиссера с ID " + director.getId() + " нет в базе"));
         if (StringUtils.isBlank(director.getName())) {
             throw new ValidationException("Имя режиссера обзятельно для заполнения");
         }
         return directorRepository.updateDirector(director);
     }
 
-    public boolean deleteDirector(int id) {
-        directorRepository.getDirectorById(id).orElseThrow(() ->
-                new DirectorNotFoundException("Режиссера с ID " + id + " нет в базе"));
-        return directorRepository.deleteDirector(id);
+    public void deleteDirector(int id) {
+        directorRepository.deleteDirector(id);
     }
 
 }

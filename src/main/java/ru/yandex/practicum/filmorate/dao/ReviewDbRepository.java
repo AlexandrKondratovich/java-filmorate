@@ -180,13 +180,13 @@ public class ReviewDbRepository implements ReviewRepository {
         jdbcOperations.update(sql, map);
     }
 
-    public void checkExistence(int count, long id) {
+    private void checkExistence(int count, long id) {
         if (count == 0) {
             throw new ReviewNotExistObject("Отзыв с айди " + id + " не найден");
         }
     }
 
-    public void incrementUseful(long reviewId) {
+    private void incrementUseful(long reviewId) {
         String sqlForReviews = "UPDATE REVIEWS SET USEFUL = USEFUL + 1 " +
                 "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();
@@ -194,7 +194,7 @@ public class ReviewDbRepository implements ReviewRepository {
         jdbcOperations.update(sqlForReviews, map);
     }
 
-    public void decrementUseful(long reviewId) {
+    private void decrementUseful(long reviewId) {
         String sqlForReviews = "UPDATE REVIEWS SET USEFUL = USEFUL - 1 " +
                 "WHERE REVIEW_ID = :reviewId ";
         MapSqlParameterSource map = new MapSqlParameterSource();

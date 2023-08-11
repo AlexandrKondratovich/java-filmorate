@@ -8,11 +8,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.rowMapper.DirectorRowMapper;
+import ru.yandex.practicum.filmorate.exception.DirectorNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -31,17 +31,8 @@ public class DirectorDbRepository implements DirectorRepository {
     }
 
     @Override
-    public Optional<Director> getDirectorById(int id) {
-
-        String sql = "select * from DIRECTORS where DIRECTOR_ID = :id";
-        List<Director> directorList = jdbcTemplate.query(sql, Map.of("id", id), new DirectorRowMapper());
-        if (!directorList.isEmpty()) {
-            log.info("Найден режиссер с ID: {} и именем {} ", directorList.get(0).getId(), directorList.get(0).getName());
-            return Optional.of(directorList.get(0));
-        } else {
-            log.info("Режиссера c идентификатором {} не найдено", id);
-            return Optional.empty();
-        }
+    public Director getDirectorById(int id) {
+        return checkDirectorId(id);
     }
 
     @Override
@@ -62,7 +53,7 @@ public class DirectorDbRepository implements DirectorRepository {
 
     @Override
     public Director updateDirector(Director director) {
-
+        checkDirectorId(director.getId());
         String sql = "UPDATE DIRECTORS SET NAME = :name WHERE DIRECTOR_ID = :id";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("id", director.getId());
@@ -75,24 +66,25 @@ public class DirectorDbRepository implements DirectorRepository {
     }
 
     @Override
-    public boolean deleteDirector(int id) {
-
+    public void deleteDirector(int id) {
+        checkDirectorId(id);
         String sql = "DELETE FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :directorId";
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("directorId", id);
         jdbcTemplate.update(sql, map);
-
         sql = "DELETE FROM DIRECTORS WHERE DIRECTOR_ID = :directorId";
-        MapSqlParameterSource map1 = new MapSqlParameterSource();
-        map1.addValue("directorId", id);
+        jdbcTemplate.update(sql, map);
+    }
 
-        int count = jdbcTemplate.update(sql, map1);
-        if (count > 0) {
-            log.info("Удален режиссер с ID {}", id);
-            return true;
-        } else {
-            log.info("Режиссер с ID {} нет в базе, удалять нечего", id);
-            return false;
+    private Director checkDirectorId(int directorId) {
+        String sql = "select * from DIRECTORS where DIRECTOR_ID = :directorId";
+        List<Director> directors = jdbcTemplate.query(sql, Map.of("directorId", directorId), new DirectorRowMapper());
+        if (directors.size() != 1) {
+            throw new DirectorNotFoundException(directorId);
         }
+        if (directors.get(0).getId() != directorId) {
+            throw new DirectorNotFoundException(directorId);
+        }
+        return directors.get(0);
     }
 }
