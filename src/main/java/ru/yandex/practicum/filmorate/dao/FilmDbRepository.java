@@ -166,20 +166,20 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count) {
         final String sqlQuery = "select F.FILM_ID, " +
-                                       "F.NAME, " +
-                                       "F.RELEASE_DATE, " +
-                                       "F.DESCRIPTION, " +
-                                       "F.DURATION, " +
-                                       "M.MPA_ID, " +
-                                       "M.NAME, " +
-                                       "COUNT(L.USER_ID) " +
+                "F.NAME, " +
+                "F.RELEASE_DATE, " +
+                "F.DESCRIPTION, " +
+                "F.DURATION, " +
+                "M.MPA_ID, " +
+                "M.NAME, " +
+                "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
                 "where F.FILM_ID IN (" +
-                    "select FILM_ID " +
-                    "from FILMS_GENRES " +
-                    "where GENRE_ID = :genreId) " +
+                "select FILM_ID " +
+                "from FILMS_GENRES " +
+                "where GENRE_ID = :genreId) " +
                 "and extract(YEAR from F.RELEASE_DATE) = :year " +
                 "group by F.FILM_ID " +
                 "order by COUNT(L.USER_ID) " +
@@ -192,13 +192,13 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public List<Film> getMostPopularFilmsByYear(int year, int count) {
         final String sqlQuery = "select F.FILM_ID, " +
-                                       "F.NAME, " +
-                                       "F.RELEASE_DATE, " +
-                                       "F.DESCRIPTION, " +
-                                       "F.DURATION, " +
-                                       "M.MPA_ID, " +
-                                       "M.NAME, " +
-                                       "COUNT(L.USER_ID) " +
+                "F.NAME, " +
+                "F.RELEASE_DATE, " +
+                "F.DESCRIPTION, " +
+                "F.DURATION, " +
+                "M.MPA_ID, " +
+                "M.NAME, " +
+                "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
@@ -212,13 +212,13 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public List<Film> getMostPopularFilmsByGenre(long genreId, int count) {
         final String sqlQuery = "select F.FILM_ID, " +
-                                       "F.NAME, " +
-                                       "F.RELEASE_DATE, " +
-                                       "F.DESCRIPTION, " +
-                                       "F.DURATION, " +
-                                       "M.MPA_ID, " +
-                                       "M.NAME, " +
-                                       "COUNT(L.USER_ID) " +
+                "F.NAME, " +
+                "F.RELEASE_DATE, " +
+                "F.DESCRIPTION, " +
+                "F.DURATION, " +
+                "M.MPA_ID, " +
+                "M.NAME, " +
+                "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
@@ -235,13 +235,13 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public List<Film> getMostPopularFilms(int count) {
         final String sqlQuery = "select F.FILM_ID, " +
-                                       "F.NAME, " +
-                                       "F.RELEASE_DATE, " +
-                                       "F.DESCRIPTION, " +
-                                       "F.DURATION, " +
-                                       "M.MPA_ID, " +
-                                       "M.NAME, " +
-                                       "COUNT(L.USER_ID) " +
+                "F.NAME, " +
+                "F.RELEASE_DATE, " +
+                "F.DESCRIPTION, " +
+                "F.DURATION, " +
+                "M.MPA_ID, " +
+                "M.NAME, " +
+                "COUNT(L.USER_ID) " +
                 "from FILMS as F " +
                 "join MPA as M on F.MPA_ID = M.MPA_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
@@ -334,6 +334,64 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sql, Map.of("regex", regex), new FilmRowMapper());
     }
 
+    @Override
+    public List<Film> getRecommendations(long userId) {
+        checkUserId(userId);
+        final String sqlQuery = "select * " +
+                "from FILMS as F " +
+                "join MPA as M ON F.MPA_ID = M.MPA_ID " +
+                "where F.FILM_ID IN (" +
+                "select DISTINCT L.FILM_ID " +
+                "from LIKES as L " +
+                "where L.USER_ID IN (" +
+                "select FL1.USER_ID " +
+                "from LIKES as FL1 " +
+                "right join LIKES as FL2 ON FL1.FILM_ID = FL2.FILM_ID " +
+                "where FL2.USER_ID = :userId " +
+                "and FL1.USER_ID != :userId " +
+                "group by FL1.USER_ID " +
+                "order by COUNT(FL1.user_id) DESC " +
+                "limit 3" +
+                ")" +
+                ") " +
+                "and F.FILM_ID NOT IN (" +
+                "select FILM_ID " +
+                "from LIKES " +
+                "where USER_ID = :userId" +
+                ") " +
+                "order BY F.FILM_ID";
+        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
+    }
+
+    @Override
+    public List<Film> findByUserId(int userId) {
+        checkUserId(userId);
+
+        final String sqlQuery = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
+                "FROM FILMS F " +
+                "JOIN MPA as M ON F.MPA_ID=M.MPA_ID " +
+                "JOIN LIKES L ON F.film_id = L.film_id " +
+                "WHERE L.user_id = :userId";
+
+        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
+    }
+
+    private class FilmRowMapper implements RowMapper<Film> {
+        @Override
+        public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new Film(rs.getLong("FILM_ID"),
+                    rs.getString("NAME"),
+                    rs.getString("DESCRIPTION"),
+                    rs.getDate("RELEASE_DATE").toLocalDate(),
+                    rs.getLong("DURATION"),
+                    new Mpa(rs.getLong("MPA.MPA_ID"), rs.getString("MPA.NAME")),
+                    new HashSet<>(getDirectorListByFilmId(rs.getLong("FILM_ID"))),
+                    new HashSet<>(getFilmGenres(rs.getLong("FILM_ID"))),
+                    new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
+        }
+    }
+
+
     private void addGenreToFilm(long filmId, long genreId) {
         String sqlQuery = "select GENRE_ID " +
                 "from FILMS_GENRES " +
@@ -383,7 +441,7 @@ public class FilmDbRepository implements FilmRepository {
         return jdbcOperations.query(sql, Map.of("filmId", filmId), new DirectorRowMapper());
     }
 
-    public void deleteLikesByFilmId(long filmId) {
+    private void deleteLikesByFilmId(long filmId) {
         checkFilmId(filmId);
         final String sqlQuery = "delete from LIKES " +
                 "where FILM_ID = :filmId";
@@ -434,62 +492,5 @@ public class FilmDbRepository implements FilmRepository {
                 }
             }
         }
-    }
-
-    @Override
-    public List<Film> getRecommendations(long userId) {
-        checkUserId(userId);
-        final String sqlQuery = "select * " +
-                "from FILMS as F " +
-                "join MPA as M ON F.MPA_ID = M.MPA_ID " +
-                "where F.FILM_ID IN (" +
-                    "select DISTINCT L.FILM_ID " +
-                    "from LIKES as L " +
-                    "where L.USER_ID IN (" +
-                        "select FL1.USER_ID " +
-                        "from LIKES as FL1 " +
-                        "right join LIKES as FL2 ON FL1.FILM_ID = FL2.FILM_ID " +
-                        "where FL2.USER_ID = :userId " +
-                        "and FL1.USER_ID != :userId " +
-                        "group by FL1.USER_ID " +
-                        "order by COUNT(FL1.user_id) DESC " +
-                        "limit 3" +
-                    ")" +
-                ") " +
-                "and F.FILM_ID NOT IN (" +
-                    "select FILM_ID " +
-                    "from LIKES " +
-                    "where USER_ID = :userId" +
-                ") " +
-                "order BY F.FILM_ID";
-        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
-    }
-
-    private class FilmRowMapper implements RowMapper<Film> {
-        @Override
-        public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new Film(rs.getLong("FILM_ID"),
-                    rs.getString("NAME"),
-                    rs.getString("DESCRIPTION"),
-                    rs.getDate("RELEASE_DATE").toLocalDate(),
-                    rs.getLong("DURATION"),
-                    new Mpa(rs.getLong("MPA.MPA_ID"), rs.getString("MPA.NAME")),
-                    new HashSet<>(getDirectorListByFilmId(rs.getLong("FILM_ID"))),
-                    new HashSet<>(getFilmGenres(rs.getLong("FILM_ID"))),
-                    new HashSet<>(getFilmLikes(rs.getLong("FILM_ID"))));
-        }
-    }
-
-    @Override
-    public List<Film> findByUserId(int userId) {
-        checkUserId(userId);
-
-        final String sqlQuery = "SELECT F.FILM_ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, M.MPA_ID, M.NAME " +
-                "FROM FILMS F " +
-                "JOIN MPA as M ON F.MPA_ID=M.MPA_ID " +
-                "JOIN LIKES L ON F.film_id = L.film_id " +
-                "WHERE L.user_id = :userId";
-
-        return jdbcOperations.query(sqlQuery, Map.of("userId", userId), new FilmRowMapper());
     }
 }

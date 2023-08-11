@@ -101,12 +101,12 @@ public class ReviewService {
         reviewRepository.deleteDislike(reviewId, userId);
     }
 
-    public void validation(Review review) {
+    private void validation(Review review) {
         userRepository.getById(review.getUserId());
         filmRepository.getById(review.getFilmId());
         if (review.getContent() == null || review.getIsPositive() == null ||
                 review.getUserId() == null || review.getFilmId() == null) {
-            throw new ValidationException("Неправильно передеан отзыв");
+            throw new ValidationException("Неправильно передан отзыв");
         }
     }
 }

@@ -46,7 +46,6 @@ public class UserService {
 
     public void delete(long userId) {
         userRepository.delete(userId);
-        eventRepository.deleteByUserId(userId);
     }
 
     public void addFriend(long userId, long friendId) {
@@ -72,14 +71,14 @@ public class UserService {
         return eventRepository.getEventsByUserId(userId);
     }
 
+    public List<Film> getRecommendations(long userId) {
+        return filmRepository.getRecommendations(userId);
+    }
+
     private User checkUserName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         return user;
-    }
-
-    public List<Film> getRecommendations(long userId) {
-        return filmRepository.getRecommendations(userId);
     }
 }

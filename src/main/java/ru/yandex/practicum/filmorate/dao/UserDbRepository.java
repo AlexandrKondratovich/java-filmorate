@@ -1,16 +1,14 @@
 package ru.yandex.practicum.filmorate.dao;
 
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.rowMapper.UserRowMapper;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,12 +23,7 @@ public class UserDbRepository implements UserRepository {
 
     @Override
     public User getById(long userId) {
-        checkUserId(userId);
-        final String sqlQuery = "select * " +
-                "from USERS " +
-                "where USER_ID = :userId";
-        final List<User> users = jdbcOperations.query(sqlQuery, Map.of("userId", userId), new UserRowMapper());
-        return users.get(0);
+        return checkUserId(userId);
     }
 
     @Override
@@ -169,24 +162,17 @@ public class UserDbRepository implements UserRepository {
         return commonFriendsIds.stream().map(this::getById).collect(Collectors.toList());
     }
 
-    private void checkUserId(long userId) {
-        final String sqlQuery = "select USER_ID " +
+    private User checkUserId(long userId) {
+        final String sqlQuery = "select * " +
                 "from USERS " +
                 "where USER_ID = :userId ";
-        List<Long> usersId = jdbcOperations.queryForList(sqlQuery, Map.of("userId", userId), Long.class);
-        if (usersId.size() != 1) {
+        List<User> users = jdbcOperations.query(sqlQuery, Map.of("userId", userId), new UserRowMapper());
+        if (users.size() != 1) {
             throw new UserNotFoundException(userId);
         }
-    }
-
-    private static class UserRowMapper implements RowMapper<User> {
-        @Override
-        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new User(rs.getLong("USER_ID"),
-                    rs.getString("EMAIL"),
-                    rs.getString("LOGIN"),
-                    rs.getString("NAME"),
-                    rs.getDate("BIRTHDAY").toLocalDate());
+        if (users.get(0).getId() != userId) {
+            throw new UserNotFoundException(userId);
         }
+        return users.get(0);
     }
 }
