@@ -25,4 +25,26 @@ public interface FilmRepository {
     List<User> getFilmLikes(long filmId);
 
     List<Genre> getFilmGenres(long filmId);
+
+    List<Film> getDirectorFilmListByYear(int directorId);
+
+    List<Film> getDirectorFilmListByLikes(int directorId);
+
+    List<Film> searchFilmsByDirAndName(String query);
+
+    List<Film> searchFilmsByName(String query);
+
+    List<Film> searchFilmsByDir(String query);
+
+    List<Film> getMostPopularFilmsByYearAndGenre(long genreId, int year, int count);
+
+    List<Film> getMostPopularFilmsByYear(int year, int count);
+
+    List<Film> getMostPopularFilmsByGenre(long genreId, int count);
+
+    List<Film> getMostPopularFilms(int count);
+
+    List<Film> getRecommendations(long userId);
+
+    List<Film> findByUserId(int userId);
 }
