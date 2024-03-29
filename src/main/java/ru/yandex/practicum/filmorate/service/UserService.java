@@ -3,12 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.EventRepository;
-import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
-import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 
@@ -21,12 +15,6 @@ public class UserService {
 
     @Qualifier("userDbRepository")
     final UserRepository userRepository;
-    @Qualifier("filmDbRepository")
-    final FilmRepository filmRepository;
-
-    @Qualifier("eventDbRepository")
-    final EventRepository eventRepository;
-
 
     public User get(long userId) {
         return userRepository.getById(userId);
@@ -50,12 +38,10 @@ public class UserService {
 
     public void addFriend(long userId, long friendId) {
         userRepository.addFriend(userId, friendId);
-        eventRepository.add(EventRepository.createEvent(userId, EventType.FRIEND, friendId, Operation.ADD));
     }
 
     public void deleteFriend(long userId, long friendId) {
         userRepository.deleteFriend(userId, friendId);
-        eventRepository.add(EventRepository.createEvent(userId, EventType.FRIEND, friendId, Operation.REMOVE));
     }
 
     public List<User> getFriendsListById(long userId) {
@@ -64,15 +50,6 @@ public class UserService {
 
     public List<User> getCommonFriendsList(long firstUserId, long secondUserId) {
         return userRepository.getCommonFriends(firstUserId, secondUserId);
-    }
-
-    public List<Event> getUserFeed(long userId) {
-        userRepository.getById(userId);
-        return eventRepository.getEventsByUserId(userId);
-    }
-
-    public List<Film> getRecommendations(long userId) {
-        return filmRepository.getRecommendations(userId);
     }
 
     private User checkUserName(User user) {

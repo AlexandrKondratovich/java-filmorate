@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -11,11 +10,9 @@ import java.util.Set;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class ValidateService {
 
     private static final Validator validator;
-    private final DirectorService directorService;
 
     static {
         ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
@@ -65,4 +62,5 @@ public class ValidateService {
             throw new ValidationException("Некорректная длительность: " + violation.getMessage());
         }
     }
+
 }
